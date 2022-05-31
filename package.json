@@ -1,0 +1,13 @@
+{
+  "name": "multi-paint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:server": "npm start --prefix modules/server",
+    "build:server": "npm run build --prefix modules/server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

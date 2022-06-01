@@ -12,5 +12,6 @@ module.exports = merge(common, {
     port: 3000,
     static: path.join(__dirname, 'build'),
     hot: true,
+    historyApiFallback: true,
   },
 })

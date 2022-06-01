@@ -1,23 +1,14 @@
-import { type FC, useEffect } from 'react';
+import { type FC } from 'react';
 import { Box } from '@chakra-ui/react';
 
-let socket = new WebSocket(process.env.WS_URL as string);
+import Login from './pages/Login';
 
 const App: FC = () => {
-  useEffect(() => {
-    const handleOpen = (): void => {
-      console.log('connection opened');
-    };
-
-    socket.addEventListener('open', handleOpen);
-
-    return () => {
-      socket.close();
-      socket.removeEventListener('open', handleOpen);
-    };
-  }, []);
-
-  return <Box>Hi</Box>;
+  return (
+    <Box>
+      <Login />
+    </Box>
+  );
 };
 
 export default App;

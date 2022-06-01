@@ -1,12 +1,11 @@
 import { type FC } from 'react';
 import { Box } from '@chakra-ui/react';
-
-import Login from './pages/Login';
+import { Outlet } from 'react-router-dom';
 
 const App: FC = () => {
   return (
-    <Box>
-      <Login />
+    <Box> 
+      <Outlet />
     </Box>
   );
 };

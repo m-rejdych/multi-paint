@@ -1,18 +1,25 @@
 import { type FC, useState } from 'react';
 import { VStack, Box, Input, Text, Button } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 
 const Login: FC = () => {
-  const [value, setValue] = useState('');
+  const [username, setUsername] = useState('');
   const [touched, setTouched] = useState(false);
+  const navigate = useNavigate();
 
-  const isInvalid = touched && !value;
+  const isInvalid = touched && !username;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setValue(e.target.value);
+    if (!touched) setTouched(true);
+    setUsername(e.target.value);
   };
 
-  const handleBlur = (_: React.FocusEvent<HTMLInputElement>): void => {
+  const handleBlur = (): void => {
     if (!touched) setTouched(true);
+  };
+
+  const handleSubmit = (): void => {
+    navigate('/rooms', { state: { username } });
   };
 
   return (
@@ -29,7 +36,7 @@ const Login: FC = () => {
           Enter username
         </Text>
         <Input
-          value={value}
+          value={username}
           colorScheme="teal"
           placeholder={isInvalid ? 'Username is required' : ''}
           _placeholder={{ color: 'red.500' }}
@@ -41,6 +48,7 @@ const Login: FC = () => {
           variant="solid"
           colorScheme="teal"
           disabled={!touched || isInvalid}
+          onClick={handleSubmit}
         >
           Enter
         </Button>

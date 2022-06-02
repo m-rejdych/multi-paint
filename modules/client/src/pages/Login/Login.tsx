@@ -45,7 +45,6 @@ const Login: FC = () => {
           onBlur={handleBlur}
         />
         <Button
-          variant="solid"
           colorScheme="teal"
           disabled={!touched || isInvalid}
           onClick={handleSubmit}

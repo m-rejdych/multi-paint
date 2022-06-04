@@ -1,20 +1,14 @@
-const CHARS =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' as const;
+import makeid from '../util/makeid';
+
+import type User from './User';
 
 export default class Room {
-  id: string;
+  id = makeid(5);
+  users: User[] = [];
 
-  constructor() {
-    this.id = Room.makeid(5);
-  }
+  constructor(public name: string) {}
 
-  private static makeid(length: number): string {
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-      result += CHARS[Math.floor(Math.random() * CHARS.length)];
-    }
-
-    return result;
+  addUser(user: User) {
+    this.users.push(user);
   }
 }

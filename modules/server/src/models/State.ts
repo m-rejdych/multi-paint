@@ -1,14 +1,12 @@
 import Room from './Room';
 
 export default class State {
-  rooms: Record<string, Room>;
+  rooms: Record<string, Room> = {};
 
-  constructor() {
-    this.rooms = {};
-  }
-
-  addRoom(): void {
-    const room = new Room();
+  addRoom(roomName: string): Room {
+    const room = new Room(roomName);
     this.rooms[room.id] = room;
+
+    return room;
   }
 }

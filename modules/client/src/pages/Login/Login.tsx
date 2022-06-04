@@ -22,13 +22,19 @@ const Login: FC = () => {
     navigate('/rooms', { state: { username } });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
   return (
     <Box h="100vh" display="flex" alignItems="center" justifyContent="center">
       <VStack
         spacing={3}
         w="30%"
         p={6}
-        bgColor="gray.100"
+        bgColor="gray.700"
         boxShadow="md"
         borderRadius="md"
       >
@@ -43,6 +49,7 @@ const Login: FC = () => {
           isInvalid={isInvalid}
           onChange={handleChange}
           onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
         />
         <Button
           colorScheme="teal"

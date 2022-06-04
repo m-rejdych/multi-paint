@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface LocationState {
-  username: string;
-}
+import type RoomsLocationState from '../types/RoomsLocationState';
 
-const useUsernameGuard = <T extends LocationState = LocationState>(
+const useUsernameGuard = <T extends RoomsLocationState = RoomsLocationState>(
   locationState: T | null,
 ): void => {
   const navigate = useNavigate();

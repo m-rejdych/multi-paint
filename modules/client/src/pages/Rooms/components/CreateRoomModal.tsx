@@ -10,15 +10,18 @@ import {
   Button,
   Input,
 } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
+  username: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const CreateRoomModal: FC<Props> = ({ isOpen, onClose }) => {
+const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
   const [roomName, setRoomName] = useState('');
   const [touched, setTouched] = useState(false);
+  const navigate = useNavigate();
 
   const isInvalid = touched && !roomName;
 
@@ -29,6 +32,16 @@ const CreateRoomModal: FC<Props> = ({ isOpen, onClose }) => {
 
   const handleBlur = (): void => {
     if (!touched) setTouched(true);
+  };
+
+  const handleSubmit = (): void => {
+    navigate(`/rooms/${roomName}`, { state: { username } });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
   };
 
   return (
@@ -46,10 +59,15 @@ const CreateRoomModal: FC<Props> = ({ isOpen, onClose }) => {
             value={roomName}
             onChange={handleChange}
             onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
           />
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="teal" disabled={!touched || isInvalid}>
+          <Button
+            colorScheme="teal"
+            disabled={!touched || isInvalid}
+            onClick={handleSubmit}
+          >
             Create
           </Button>
         </ModalFooter>

@@ -4,7 +4,7 @@ import type User from './User';
 
 export default class Room {
   id = makeid(5);
-  users: User[] = [];
+  private users: User[] = [];
 
   constructor(public name: string) {}
 

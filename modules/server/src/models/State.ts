@@ -1,3 +1,5 @@
+import { RequestHandler } from 'express';
+
 import Room from './Room';
 
 export default class State {
@@ -9,4 +11,9 @@ export default class State {
 
     return room;
   }
+
+  middleware: RequestHandler = (req, _, next) => {
+    req.state = this;
+    next();
+  };
 }

@@ -9,8 +9,11 @@ import {
   ModalFooter,
   Button,
   Input,
+  Text,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+
+import { createRoom } from '../../../services/rooms';
 
 interface Props {
   username: string;
@@ -21,6 +24,8 @@ interface Props {
 const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
   const [roomName, setRoomName] = useState('');
   const [touched, setTouched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const isInvalid = touched && !roomName;
@@ -34,8 +39,23 @@ const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
     if (!touched) setTouched(true);
   };
 
-  const handleSubmit = (): void => {
-    navigate(`/rooms/${roomName}`, { state: { username } });
+  const handleSubmit = async (): Promise<void> => {
+    setLoading(true);
+
+    try {
+      const response = await createRoom({ username, roomName });
+      const { id } = response.data;
+      navigate(`/rooms/${id}`, { state: { username } });
+      onClose();
+      setRoomName('');
+      setTouched(false);
+      setLoading(false);
+      setError('');
+    } catch (error: any) {
+      setError(error.response.data.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -63,8 +83,14 @@ const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
           />
         </ModalBody>
         <ModalFooter>
+          {error && (
+            <Text color="red.500" mr={4}>
+              {error}
+            </Text>
+          )}
           <Button
             colorScheme="teal"
+            isLoading={loading}
             disabled={!touched || isInvalid}
             onClick={handleSubmit}
           >

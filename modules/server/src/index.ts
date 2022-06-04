@@ -7,7 +7,6 @@ import WebSocket from 'ws';
 
 import { PORT, HOST, __prod__ } from './config';
 import errorHandler from './handlers/error';
-import stateMiddleware from './middleware/stateMiddleware';
 import roomRoutes from './routes/rooms';
 import State from './models/State';
 
@@ -42,7 +41,7 @@ const init = (): void => {
     );
   }
 
-  app.use('/api/rooms', stateMiddleware(state), roomRoutes);
+  app.use('/api/rooms', state.middleware, roomRoutes);
   app.use(errorHandler);
 
   wss.on('connection', (socket) => {

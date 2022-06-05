@@ -77,7 +77,7 @@ const RoomsList: FC = () => {
             _notLast={{ mb: 4 }}
           >
             <Text>{name}</Text>
-            <Text>Active users: {users.length}</Text>
+            <Text>Active users: {Object.keys(users).length}</Text>
           </ListItem>
         ))}
       </List>

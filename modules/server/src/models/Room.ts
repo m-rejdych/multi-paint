@@ -4,7 +4,7 @@ import type User from './User';
 
 export default class Room {
   id = makeid(5);
-  users: User[] = [];
+  users: Record<string, User> = {};
   private cleanup: () => void;
 
   constructor(public name: string, cleanup: () => void) {
@@ -14,20 +14,20 @@ export default class Room {
   }
 
   addUser(user: User): void {
-    this.users.push(user);
+    this.users[user.id] = user;
   }
 
   deleteUser(id: string): void {
-    this.users = this.users.filter(({ id: userId }) => id !== userId);
+    delete this.users[id];
 
-    if (!this.users.length) {
+    if (!Object.keys(this.users).length) {
       this.runCleanupTimeout(10000);
     }
   }
 
   private runCleanupTimeout(ms: number): void {
     setTimeout(() => {
-      if (!this.users.length) {
+      if (!Object.keys(this.users).length) {
         this.cleanup();
       }
     }, ms);

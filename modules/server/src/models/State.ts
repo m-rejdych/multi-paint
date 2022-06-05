@@ -6,7 +6,9 @@ export default class State {
   rooms: Record<string, Room> = {};
 
   addRoom(roomName: string): Room {
-    const room = new Room(roomName);
+    const room = new Room(roomName, () => {
+      this.deleteRoom(room.id);
+    });
     this.rooms[room.id] = room;
 
     return room;
@@ -16,4 +18,8 @@ export default class State {
     req.state = this;
     next();
   };
+
+  deleteRoom(id: string): void {
+    delete this.rooms[id];
+  }
 }

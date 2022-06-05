@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react';
+import { type FC, useEffect, useState, useRef } from 'react';
 import { Spinner, Text, List, ListItem, Flex } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -9,8 +9,10 @@ import type RoomsLocationState from '../../../types/RoomsLocationState';
 const RoomsList: FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(false);
   const [error, setError] = useState('');
   const { state } = useLocation();
+  const refreshRef = useRef<NodeJS.Timer | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +24,9 @@ const RoomsList: FC = () => {
         setRooms(response.data);
         setError('');
         setLoading(false);
+        if (!initialLoad) {
+          setInitialLoad(true);
+        }
       } catch (error: any) {
         setError(error.response.data.message);
         setLoading(false);
@@ -29,6 +34,15 @@ const RoomsList: FC = () => {
     };
 
     loadRooms();
+    const refresh = setInterval(loadRooms, 5000);
+    refreshRef.current = refresh;
+
+    return () => {
+      if (refreshRef.current) {
+        clearInterval(refreshRef.current);
+        refreshRef.current = null;
+      }
+    };
   }, []);
 
   const handleClick = (roomId: string, roomName: string): void => {
@@ -45,7 +59,7 @@ const RoomsList: FC = () => {
     );
   }
 
-  return loading ? (
+  return loading && !initialLoad ? (
     <Flex
       width="100%"
       height="40vh"

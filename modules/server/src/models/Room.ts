@@ -3,13 +3,10 @@ import makeid from '../util/makeid';
 import type User from './User';
 
 export default class Room {
-  id = makeid(5);
+  readonly id = makeid(5);
   users: Record<string, User> = {};
-  private cleanup: () => void;
 
-  constructor(public name: string, cleanup: () => void) {
-    this.cleanup = cleanup;
-
+  constructor(public name: string, private readonly cleanup: () => void) {
     this.runCleanupTimeout(10000);
   }
 

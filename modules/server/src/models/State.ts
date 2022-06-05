@@ -4,6 +4,10 @@ import Room from './Room';
 
 export default class State {
   rooms: Record<string, Room> = {};
+  readonly middleware: RequestHandler = (req, _, next) => {
+    req.state = this;
+    next();
+  };
 
   addRoom(roomName: string): Room {
     const room = new Room(roomName, () => {
@@ -13,11 +17,6 @@ export default class State {
 
     return room;
   }
-
-  middleware: RequestHandler = (req, _, next) => {
-    req.state = this;
-    next();
-  };
 
   deleteRoom(id: string): void {
     delete this.rooms[id];

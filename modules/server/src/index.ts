@@ -9,6 +9,7 @@ import { PORT, HOST, __prod__ } from './config';
 import errorHandler from './handlers/error';
 import roomRoutes from './routes/rooms';
 import State from './models/State';
+import WebSocketManager from './models/WebSocketManager';
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -30,6 +31,7 @@ const init = (): void => {
   const server = http.createServer(app);
   const wss = new WebSocket.Server({ server });
   const state = new State();
+  const wsManager = new WebSocketManager(wss, state);
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
@@ -44,17 +46,7 @@ const init = (): void => {
   app.use('/api/rooms', state.middleware, roomRoutes);
   app.use(errorHandler);
 
-  wss.on('connection', (socket) => {
-    log.info('CONNECTION', 'Connection opened');
-
-    socket.on('error', (err) => {
-      log.error('ERROR', err.message);
-    });
-
-    socket.on('close', () => {
-      log.info('CLOSE', 'Connection closed');
-    });
-  });
+  wsManager.registerHandlers();
 
   server.listen(PORT, HOST, () => {
     log.info('LIFTOFF', `Server is running on http://${HOST}:${PORT}`);

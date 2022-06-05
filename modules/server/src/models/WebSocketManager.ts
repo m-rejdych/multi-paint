@@ -6,7 +6,6 @@ import {
   WebSocketServerEvent,
   MessageEvent,
 } from '../types/Event';
-import User from './User';
 import type {
   Message,
   JoinRoomMessage,
@@ -16,27 +15,27 @@ import type State from './State';
 
 export default class WebSocketManager {
   constructor(
-    private readonly wss: WebSocket.Server,
-    private readonly state: State,
+    private readonly _wss: WebSocket.Server,
+    private readonly _state: State,
   ) {}
 
-  private handleConnection(socket: WebSocket.WebSocket): void {
+  private _handleConnection(socket: WebSocket.WebSocket): void {
     log.info('WSOPEN', 'Connection established');
 
-    socket.on(WebSocketEvent.Message, this.handleMessage);
-    socket.on(WebSocketEvent.Close, this.handleClose);
+    socket.on(WebSocketEvent.Message, this._handleMessage);
+    socket.on(WebSocketEvent.Close, this._handleClose);
   }
 
-  private handleClose(): void {
+  private _handleClose(): void {
     log.info('WSCLOSE', 'Connection closed');
   }
 
-  private handleMessage(rawMessage: string): void {
+  private _handleMessage(rawMessage: string): void {
     const message: Message<MessageEvent, unknown> = JSON.parse(rawMessage);
 
     switch (message.event) {
       case MessageEvent.JoinRoom:
-        this.handleJoinRoom(message as JoinRoomMessage);
+        this._handleJoinRoom(message as JoinRoomMessage);
         break;
       case MessageEvent.LeaveRoom:
         this.handleLeaveRoom(message as LeaveRoomMessage);
@@ -47,31 +46,29 @@ export default class WebSocketManager {
   }
 
   // TODO: Emit error / success event to client socket
-  private handleJoinRoom({
+  private _handleJoinRoom({
     data: { username, roomId },
   }: JoinRoomMessage): void {
-    const room = this.state.rooms[roomId];
+    const room = this._state.getRoom(roomId);
     if (!room) {
       log.error('ERROR', `Room not found: "${roomId}"`);
       return;
     }
 
-    const user = new User(username);
-
-    room.addUser(user);
+    room.addUser(username);
   }
 
   // TODO: Emit error / success event to client socket
   private handleLeaveRoom({
     data: { roomId, userId },
   }: LeaveRoomMessage): void {
-    const room = this.state.rooms[roomId];
+    const room = this._state.getRoom(roomId);
     if (!room) {
       log.error('ERROR', `Room not found: "${roomId}"`);
       return;
     }
 
-    if (!room.users[userId]) {
+    if (!room.getUser(userId)) {
       log.error('ERROR', `User not found: "${userId}" in room: ${roomId}`);
       return;
     }
@@ -80,6 +77,6 @@ export default class WebSocketManager {
   }
 
   registerHandlers(): void {
-    this.wss.on(WebSocketServerEvent.Connection, this.handleConnection);
+    this._wss.on(WebSocketServerEvent.Connection, this._handleConnection);
   }
 }

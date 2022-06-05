@@ -1,31 +1,36 @@
 import makeid from '../util/makeid';
 
-import type User from './User';
+import User from './User';
 
 export default class Room {
   readonly id = makeid(5);
-  users: Record<string, User> = {};
+  private _users: Record<string, User> = {};
 
-  constructor(public name: string, private readonly cleanup: () => void) {
-    this.runCleanupTimeout(10000);
+  constructor(public name: string, private readonly _cleanup: () => void) {
+    this._runCleanupTimeout(10000);
   }
 
-  addUser(user: User): void {
-    this.users[user.id] = user;
+  getUser(userId: string): User | undefined {
+    return this._users[userId];
+  }
+
+  addUser(username: string): void {
+    const user = new User(username);
+    this._users[user.id] = user;
   }
 
   deleteUser(id: string): void {
-    delete this.users[id];
+    delete this._users[id];
 
-    if (!Object.keys(this.users).length) {
-      this.runCleanupTimeout(10000);
+    if (!Object.keys(this._users).length) {
+      this._runCleanupTimeout(10000);
     }
   }
 
-  private runCleanupTimeout(ms: number): void {
+  private _runCleanupTimeout(ms: number): void {
     setTimeout(() => {
-      if (!Object.keys(this.users).length) {
-        this.cleanup();
+      if (!Object.keys(this._users).length) {
+        this._cleanup();
       }
     }, ms);
   }

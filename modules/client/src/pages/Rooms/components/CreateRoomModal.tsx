@@ -45,7 +45,7 @@ const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
     try {
       const response = await createRoom({ username, roomName });
       const { id } = response.data;
-      navigate(`/rooms/${id}`, { state: { username } });
+      navigate(`/rooms/${id}`, { state: { username, roomName } });
       onClose();
       setRoomName('');
       setTouched(false);
@@ -53,7 +53,6 @@ const CreateRoomModal: FC<Props> = ({ username, isOpen, onClose }) => {
       setError('');
     } catch (error: any) {
       setError(error.response.data.message);
-    } finally {
       setLoading(false);
     }
   };

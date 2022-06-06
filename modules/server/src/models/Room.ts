@@ -4,32 +4,34 @@ import User from './User';
 
 export default class Room {
   readonly id = makeid(5);
-  private _users: Record<string, User> = {};
+  private users: Record<string, User> = {};
 
   constructor(public name: string, private readonly _cleanup: () => void) {
-    this._runCleanupTimeout(10000);
+    this.runCleanupTimeout(10000);
   }
 
   getUser(userId: string): User | undefined {
-    return this._users[userId];
+    return this.users[userId];
   }
 
-  addUser(username: string): void {
+  addUser(username: string): User {
     const user = new User(username);
-    this._users[user.id] = user;
+    this.users[user.id] = user;
+
+    return user;
   }
 
   deleteUser(id: string): void {
-    delete this._users[id];
+    delete this.users[id];
 
-    if (!Object.keys(this._users).length) {
-      this._runCleanupTimeout(10000);
+    if (!Object.keys(this.users).length) {
+      this.runCleanupTimeout(10000);
     }
   }
 
-  private _runCleanupTimeout(ms: number): void {
+  private runCleanupTimeout(ms: number): void {
     setTimeout(() => {
-      if (!Object.keys(this._users).length) {
+      if (!Object.keys(this.users).length) {
         this._cleanup();
       }
     }, ms);

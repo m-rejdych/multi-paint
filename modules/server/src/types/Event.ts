@@ -19,6 +19,7 @@ export enum WebSocketEvent {
 
 export enum MessageEvent {
   JoinRoom,
+  JoinedRoom,
   LeaveRoom,
   Error,
 }

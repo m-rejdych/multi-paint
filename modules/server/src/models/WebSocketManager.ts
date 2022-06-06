@@ -9,74 +9,134 @@ import {
 import type {
   Message,
   JoinRoomMessage,
-  LeaveRoomMessage,
+  JoinedRoomMessageData,
 } from '../types/Message';
 import type State from './State';
 
 export default class WebSocketManager {
   constructor(
-    private readonly _wss: WebSocket.Server,
-    private readonly _state: State,
+    private readonly wss: WebSocket.Server,
+    private readonly state: State,
   ) {}
 
-  private _handleConnection(socket: WebSocket.WebSocket): void {
+  private handleConnection(socket: WebSocket.WebSocket): void {
     log.info('WSOPEN', 'Connection established');
 
-    socket.on(WebSocketEvent.Message, this._handleMessage);
-    socket.on(WebSocketEvent.Close, this._handleClose);
+    socket.on(WebSocketEvent.Message, this.handleMessage(socket).bind(this));
+    socket.on(WebSocketEvent.Close, this.handleClose.bind(this));
+    socket.on(WebSocketEvent.Error, this.handleError.bind(this));
   }
 
-  private _handleClose(): void {
+  private handleClose(): void {
     log.info('WSCLOSE', 'Connection closed');
   }
 
-  private _handleMessage(rawMessage: string): void {
-    const message: Message<MessageEvent, unknown> = JSON.parse(rawMessage);
+  private handleMessage(socket: WebSocket.WebSocket) {
+    return (rawMessage: string): void => {
+      const message: Message<MessageEvent, unknown> = JSON.parse(rawMessage);
+      log.info('MESSAGE', 'Incoming message', message);
 
-    switch (message.event) {
-      case MessageEvent.JoinRoom:
-        this._handleJoinRoom(message as JoinRoomMessage);
-        break;
-      case MessageEvent.LeaveRoom:
-        this.handleLeaveRoom(message as LeaveRoomMessage);
-        break;
-      default:
-        break;
-    }
+      switch (message.event) {
+        case MessageEvent.JoinRoom:
+          this.handleJoinRoom(socket, message as JoinRoomMessage);
+          break;
+        case MessageEvent.LeaveRoom:
+          this.handleLeaveRoom(socket);
+          break;
+        default:
+          break;
+      }
+    };
   }
 
-  // TODO: Emit error / success event to client socket
-  private _handleJoinRoom({
-    data: { username, roomId },
-  }: JoinRoomMessage): void {
-    const room = this._state.getRoom(roomId);
+  private handleError(): void {
+    log.error('ERROR', '');
+  }
+
+  private handleSendMessage<T extends MessageEvent, U>(
+    socket: WebSocket.WebSocket,
+    message: Message<T, U>,
+  ): void {
+    socket.send(JSON.stringify(message), (err) => {
+      if (err) {
+        log.error('ERROR', err.message);
+      }
+    });
+  }
+
+  // TODO: Emit error event to client socket
+  private handleJoinRoom(
+    socket: WebSocket.WebSocket,
+    { data: { username, roomId } }: JoinRoomMessage,
+  ): void {
+    const room = this.state.getRoom(roomId);
     if (!room) {
       log.error('ERROR', `Room not found: "${roomId}"`);
       return;
     }
 
-    room.addUser(username);
+    const user = room.addUser(username);
+    socket.userId = user.id;
+    socket.roomId = roomId;
+
+    this.setPingInterval(socket, 10000);
+
+    this.handleSendMessage<MessageEvent.JoinedRoom, JoinedRoomMessageData>(
+      socket,
+      { event: MessageEvent.JoinedRoom, data: { room, user } },
+    );
   }
 
-  // TODO: Emit error / success event to client socket
-  private handleLeaveRoom({
-    data: { roomId, userId },
-  }: LeaveRoomMessage): void {
-    const room = this._state.getRoom(roomId);
+  // TODO: Emit error event to client socket
+  private handleLeaveRoom(socket: WebSocket.WebSocket): void {
+    if (!socket.userId || !socket.roomId) {
+      log.error('ERROR', `Unknown socket`);
+      return;
+    }
+
+    const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      log.error('ERROR', `Room not found: "${roomId}"`);
+      log.error('ERROR', `Room not found: "${socket.roomId}"`);
       return;
     }
 
-    if (!room.getUser(userId)) {
-      log.error('ERROR', `User not found: "${userId}" in room: ${roomId}`);
+    if (!room.getUser(socket.userId)) {
+      log.error('ERROR', `User not found: "${socket.userId}" in room: ${socket.roomId}`);
       return;
     }
 
-    room.deleteUser(userId);
+    room.deleteUser(socket.userId);
+  }
+
+  private setPingInterval(socket: WebSocket.WebSocket, ms: number): void {
+    const interval = setInterval(() => {
+      socket.ping(undefined, undefined, (err) => {
+        if (err) {
+          log.error('PING ERROR', err.message);
+
+          clearInterval(interval);
+
+          if (!socket.roomId) return;
+
+          const room = this.state.getRoom(socket.roomId as string);
+          if (room) {
+            room.deleteUser(socket.userId as string);
+          }
+        }
+      });
+    }, ms);
+  }
+
+  unregisterHandlers(): void {
+    this.wss.removeAllListeners();
   }
 
   registerHandlers(): void {
-    this._wss.on(WebSocketServerEvent.Connection, this._handleConnection);
+    this.wss.on(
+      WebSocketServerEvent.Connection,
+      this.handleConnection.bind(this),
+    );
+    this.wss.on(WebSocketServerEvent.Error, this.handleError.bind(this));
+    this.wss.on(WebSocketServerEvent.Close, this.unregisterHandlers.bind(this));
   }
 }

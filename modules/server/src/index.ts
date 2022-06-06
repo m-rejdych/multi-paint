@@ -20,6 +20,14 @@ declare module 'express-serve-static-core' {
   }
 }
 
+declare module 'ws' {
+  class _WS extends WebSocket {}
+  export interface WebSocket extends _WS {
+    userId?: string;
+    roomId?: string;
+  }
+}
+
 declare global {
   interface Error {
     status?: number;

@@ -15,6 +15,7 @@ import type Room from '../types/Room';
 import type RoomLocationState from '../types/RoomsLocationState';
 
 const useWebSocketHandlers = (url: string): void => {
+  const socketRef = useRef<WebSocket | null>(null);
   const userRef = useRef<User | null>(null);
   const roomRef = useRef<Room | null>(null);
   const { state } = useLocation();
@@ -94,6 +95,8 @@ const useWebSocketHandlers = (url: string): void => {
     socket.addEventListener(WebSocketEvent.Close, handleClose);
     socket.addEventListener(WebSocketEvent.Message, handleMessage);
     socket.addEventListener(WebSocketEvent.Error, handleError);
+
+    socketRef.current = socket;
 
     return () => {
       handleCleanup(socket);

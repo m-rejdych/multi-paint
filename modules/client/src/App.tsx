@@ -10,7 +10,7 @@ const App: FC = () => {
   }, []);
 
   return (
-    <Box px={16} py={12}>
+    <Box px={16} py={12} height="100vh">
       <Outlet />
     </Box>
   );

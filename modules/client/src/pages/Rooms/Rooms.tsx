@@ -50,7 +50,7 @@ const Rooms: FC = () => {
   };
 
   return (
-    <VStack spacing={4} alignItems="flex-start">
+    <VStack spacing={4} alignItems="flex-start" height="100%">
       <Flex justifyContent="space-between" alignItems="center" width="100%">
         {renderButton()}
         <Text fontSize="xl" fontWeight="bold">

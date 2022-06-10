@@ -1,18 +1,19 @@
-import { type FC, useRef } from 'react';
+import type { FC } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
+import type { MessageHandler } from '../../../types/Message';
 
-const Canvas: FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+interface Props {
+  onSocketMessage: MessageHandler;
+}
 
-  useCanvas(canvasRef);
+const Canvas: FC<Props> = ({ onSocketMessage }) => {
+  const canvasRef = useCanvas(onSocketMessage);
 
   return (
     <Box borderRadius="md" overflow="hidden" cursor="grab">
       <canvas
-        //         width={innerWidth - 128}
-        //         height={innerHeight - 229}
         width={innerHeight - 229}
         height={innerHeight - 229}
         ref={canvasRef}

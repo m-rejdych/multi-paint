@@ -7,6 +7,7 @@ import {
 } from '../types/Event';
 import type {
   Message,
+  MessageHandler,
   JoinRoomMessageData,
   JoinedRoomMessage,
 } from '../types/Message';
@@ -14,17 +15,20 @@ import type User from '../types/User';
 import type Room from '../types/Room';
 import type RoomLocationState from '../types/RoomsLocationState';
 
-const useWebSocketHandlers = (url: string): void => {
+interface RoomData {
+  handleSendMessage: MessageHandler;
+  room: Room | null;
+}
+
+const useWebSocketHandlers = (url: string): RoomData => {
   const socketRef = useRef<WebSocket | null>(null);
   const userRef = useRef<User | null>(null);
   const roomRef = useRef<Room | null>(null);
   const { state } = useLocation();
   const { id } = useParams<{ id: string }>();
 
-  const handleOpen = (socket: WebSocket) => (): void => {
-    console.log('Connection established');
-
-    handleSendMessage<MessageEventKind.JoinRoom, JoinRoomMessageData>(socket, {
+  const handleOpen = (): void => {
+    handleSendMessage<MessageEventKind.JoinRoom, JoinRoomMessageData>({
       event: MessageEventKind.JoinRoom,
       data: {
         roomId: id as string,
@@ -56,28 +60,25 @@ const useWebSocketHandlers = (url: string): void => {
     console.error(error);
   };
 
-  const handleSendMessage = <T extends MessageEventKind, U>(
-    socket: WebSocket,
-    message: Message<T, U>,
-  ): void => {
+  const handleSendMessage: MessageHandler = (
+    message,
+  ) => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
     socket.send(JSON.stringify(message));
   };
 
   const handleCleanup = (socket: WebSocket): void => {
-    const userId = userRef.current?.id;
-    const roomId = roomRef.current?.id;
-
-    if (userId && roomId) {
-      handleSendMessage<MessageEventKind.LeaveRoom, undefined>(socket, {
-        event: MessageEventKind.LeaveRoom,
-        data: undefined,
-      });
-    }
+    handleSendMessage<MessageEventKind.LeaveRoom, undefined>({
+      event: MessageEventKind.LeaveRoom,
+      data: undefined,
+    });
 
     if ([WebSocket.OPEN, WebSocket.CONNECTING].includes(socket.readyState)) {
       socket.close();
     }
-    socket.removeEventListener(WebSocketEvent.Open, handleOpen(socket));
+    socket.removeEventListener(WebSocketEvent.Open, handleOpen);
     socket.removeEventListener(WebSocketEvent.Close, handleClose);
     socket.removeEventListener(WebSocketEvent.Message, handleMessage);
     socket.removeEventListener(WebSocketEvent.Error, handleError);
@@ -91,17 +92,19 @@ const useWebSocketHandlers = (url: string): void => {
 
   useEffect(() => {
     const socket = new WebSocket(url);
-    socket.addEventListener(WebSocketEvent.Open, handleOpen(socket));
+    socketRef.current = socket;
+
+    socket.addEventListener(WebSocketEvent.Open, handleOpen);
     socket.addEventListener(WebSocketEvent.Close, handleClose);
     socket.addEventListener(WebSocketEvent.Message, handleMessage);
     socket.addEventListener(WebSocketEvent.Error, handleError);
-
-    socketRef.current = socket;
 
     return () => {
       handleCleanup(socket);
     };
   }, []);
+
+  return { handleSendMessage, room: roomRef.current };
 };
 
 export default useWebSocketHandlers;

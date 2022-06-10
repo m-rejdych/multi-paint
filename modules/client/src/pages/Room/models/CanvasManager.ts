@@ -1,6 +1,8 @@
 import Position from './Position';
 import type CanvasSettings from '../types/CanvasSettings';
 import type CanvasState from '../types/CanvasState';
+import type { MessageHandler } from '../../../types/Message';
+import { MessageEvent } from '../../../types/Event';
 
 export default class CanvasManager {
   private state: CanvasState = {
@@ -8,12 +10,13 @@ export default class CanvasManager {
     cursorPosition: new Position(0, 0),
     scale: 1,
   };
-  private ctx: CanvasRenderingContext2D;
+  private readonly ctx: CanvasRenderingContext2D;
   private drawHandle = 0;
 
   constructor(
-    private canvas: HTMLCanvasElement,
-    private settings: CanvasSettings,
+    private readonly canvas: HTMLCanvasElement,
+    private readonly messageHandler: MessageHandler,
+    private readonly settings: CanvasSettings,
   ) {
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -43,6 +46,10 @@ export default class CanvasManager {
 
     ctx.fillStyle = '#000000';
     ctx.fillRect(canvas.width / 2 - 25, canvas.height / 2 - 25, 50, 50);
+  }
+
+  calculateCanvasCursorPosition(x: number, y: number): Position {
+    return new Position(x - this.canvas.offsetLeft, y - this.canvas.offsetTop);
   }
 
   draw(): void {
@@ -78,7 +85,10 @@ export default class CanvasManager {
           ? Math.min(MAX_ZOOM, state.scale * currentScale)
           : Math.max(MIN_ZOOM, state.scale * currentScale);
 
-      const pointData = new Position(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+      const pointData = new Position(
+        e.clientX - canvas.offsetLeft,
+        e.clientY - canvas.offsetTop,
+      );
       const point = new DOMPoint(pointData.x, pointData.y);
 
       const tr = ctx.getTransform();
@@ -96,24 +106,33 @@ export default class CanvasManager {
     const { state } = this;
 
     state.isDragging = true;
-    state.cursorPosition.x = e.clientX;
-    state.cursorPosition.y = e.clientY;
+
+    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+    state.cursorPosition.x = x;
+    state.cursorPosition.y = y;
   }
 
   private handleMove(e: MouseEvent): void {
+    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+
+    this.messageHandler<MessageEvent.MoveCursor, Position>({
+      event: MessageEvent.MoveCursor,
+      data: new Position(x, y),
+    });
+
     if (!this.state.isDragging) return;
 
     const { state, ctx } = this;
 
-    const offsetLeft = e.clientX - state.cursorPosition.x;
-    const offsetTop = e.clientY - state.cursorPosition.y;
+    const offsetLeft = x - state.cursorPosition.x;
+    const offsetTop = y - state.cursorPosition.y;
 
     const tr = ctx.getTransform();
     tr.translateSelf(offsetLeft, offsetTop);
     ctx.setTransform(tr);
 
-    state.cursorPosition.x = e.clientX;
-    state.cursorPosition.y = e.clientY;
+    state.cursorPosition.x = x;
+    state.cursorPosition.y = y;
   }
 
   private handleMoveEnd(): void {

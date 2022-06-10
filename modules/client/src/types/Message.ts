@@ -21,3 +21,7 @@ export type JoinedRoomMessage = Message<
   MessageEvent.JoinedRoom,
   JoinedRoomMessageData
 >;
+
+export type MessageHandler = <T extends MessageEvent, U>(
+  message: Message<T, U>,
+) => void;

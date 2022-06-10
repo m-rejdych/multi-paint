@@ -2,6 +2,7 @@ import { MessageEvent } from './Event';
 
 import type Room from '../models/Room';
 import type User from '../models/User';
+import type Position from '../models/Position';
 
 export interface Message<T extends MessageEvent, V> {
   event: T;
@@ -24,3 +25,5 @@ export type JoinRoomMessage = Message<
 >;
 
 export type LeaveRoomMessage = Message<MessageEvent.LeaveRoom, undefined>;
+
+export type MoveCursorMessage = Message<MessageEvent.MoveCursor, Position>;

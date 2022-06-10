@@ -21,5 +21,6 @@ export enum MessageEvent {
   JoinRoom,
   JoinedRoom,
   LeaveRoom,
+  MoveCursor,
   Error,
 }

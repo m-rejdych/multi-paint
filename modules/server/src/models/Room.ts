@@ -29,6 +29,10 @@ export default class Room {
     }
   }
 
+  isJoined(id: string): boolean {
+    return id in this.users;
+  }
+
   private runCleanupTimeout(ms: number): void {
     setTimeout(() => {
       if (!Object.keys(this.users).length) {

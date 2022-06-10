@@ -10,6 +10,7 @@ import type {
   Message,
   JoinRoomMessage,
   JoinedRoomMessageData,
+  MoveCursorMessage,
 } from '../types/Message';
 import type State from './State';
 
@@ -43,14 +44,20 @@ export default class WebSocketManager {
         case MessageEvent.LeaveRoom:
           this.handleLeaveRoom(socket);
           break;
+        case MessageEvent.MoveCursor:
+          this.handleMoveCursor(socket, message as MoveCursorMessage);
+          break;
         default:
           break;
       }
     };
   }
 
-  private handleError(): void {
-    log.error('ERROR', '');
+  private handleError(error: Error, shouldThrow = false): void {
+    log.error('ERROR', error.message);
+    if (shouldThrow) {
+      throw error;
+    }
   }
 
   private handleSendMessage<T extends MessageEvent, U>(
@@ -59,7 +66,7 @@ export default class WebSocketManager {
   ): void {
     socket.send(JSON.stringify(message), (err) => {
       if (err) {
-        log.error('ERROR', err.message);
+        this.handleError(err);
       }
     });
   }
@@ -71,7 +78,19 @@ export default class WebSocketManager {
   ): void {
     const room = this.state.getRoom(roomId);
     if (!room) {
-      log.error('ERROR', `Room not found: "${roomId}"`);
+      this.handleError(new Error(`Room not found: "${roomId}"`));
+      return;
+    }
+
+    if (socket.userId) {
+      if (socket.roomId === room.id) {
+        if (!room.isJoined(socket.userId)) {
+          this.handleError(new Error("User not included in room's state"));
+        }
+        return;
+      }
+
+      this.handleError(new Error('This users is in other room'));
       return;
     }
 
@@ -90,22 +109,50 @@ export default class WebSocketManager {
   // TODO: Emit error event to client socket
   private handleLeaveRoom(socket: WebSocket.WebSocket): void {
     if (!socket.userId || !socket.roomId) {
-      log.error('ERROR', `Unknown socket`);
+      this.handleError(new Error('Unknown socket'));
       return;
     }
 
     const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      log.error('ERROR', `Room not found: "${socket.roomId}"`);
+      this.handleError(new Error(`Room not found: "${socket.roomId}"`));
       return;
     }
 
     if (!room.getUser(socket.userId)) {
-      log.error('ERROR', `User not found: "${socket.userId}" in room: ${socket.roomId}`);
+      this.handleError(
+        new Error(
+          `User not found: "${socket.userId}" in room: ${socket.roomId}`,
+        ),
+      );
       return;
     }
 
     room.deleteUser(socket.userId);
+  }
+
+  private handleMoveCursor(
+    socket: WebSocket.WebSocket,
+    { data }: MoveCursorMessage,
+  ): void {
+    if (!socket.userId || !socket.roomId) {
+      this.handleError(new Error('Unknown socket'));
+      return;
+    }
+
+    const room = this.state.getRoom(socket.roomId);
+    if (!room) {
+      this.handleError(new Error('Room not fund'));
+      return;
+    }
+
+    const user = room.getUser(socket.userId);
+    if (!user) {
+      this.handleError(new Error('User not fund'));
+      return;
+    }
+
+    user.moveCursor(data);
   }
 
   private setPingInterval(socket: WebSocket.WebSocket, ms: number): void {

@@ -4,7 +4,7 @@ import User from './User';
 
 export default class Room {
   readonly id = makeid(5);
-  private users: Record<string, User> = {};
+  users: Record<string, User> = {};
 
   constructor(public name: string, private readonly _cleanup: () => void) {
     this.runCleanupTimeout(10000);

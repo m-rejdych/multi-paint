@@ -19,6 +19,11 @@ export interface JoinedRoomMessageData {
   user: User;
 }
 
+export interface MovedCursorData {
+  userId: string;
+  position: Position;
+}
+
 export type JoinRoomMessage = Message<
   MessageEvent.JoinRoom,
   JoinRoomMessageData

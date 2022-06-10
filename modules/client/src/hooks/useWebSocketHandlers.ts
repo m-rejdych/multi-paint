@@ -52,6 +52,7 @@ const useWebSocketHandlers = (url: string): RoomData => {
         handleJoinedRoomMessage(message as JoinedRoomMessage);
         break;
       default:
+        console.log(message);
         break;
     }
   };

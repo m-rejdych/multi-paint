@@ -29,9 +29,13 @@ export type JoinedRoomMessage = Message<
 >;
 
 export type MovedCursorMessage = Message<
-  MessageEvent.MovedCursor,
+  MessageEvent.UpdateCursor,
   MovedCursorMessageData
 >;
+
+export type AddUserMessage = Message<MessageEvent.AddUser, User>;
+
+export type DeleteUserMessage = Message<MessageEvent.DeleteUser, string>;
 
 export type MessageHandler = <T extends MessageEvent, U>(
   message: Message<T, U>,

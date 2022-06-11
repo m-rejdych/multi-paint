@@ -14,6 +14,7 @@ import type {
   MovedCursorData,
 } from '../types/Message';
 import type State from './State';
+import type User from './User';
 
 export default class WebSocketManager {
   constructor(
@@ -99,11 +100,14 @@ export default class WebSocketManager {
     socket.roomId = roomId;
 
     this.setPingInterval(socket, 10000);
-
     this.handleSendMessage<MessageEvent.JoinedRoom, JoinedRoomMessageData>(
       socket,
-      { event: MessageEvent.JoinedRoom, data: { room, user } },
+      { event: MessageEvent.JoinedRoom, data: { user, room } },
     );
+    this.broadcast<MessageEvent.AddUser, User>(socket, {
+      event: MessageEvent.AddUser,
+      data: user,
+    });
   }
 
   // TODO: Emit error event to client socket
@@ -129,6 +133,11 @@ export default class WebSocketManager {
     }
 
     room.deleteUser(socket.userId);
+
+    this.broadcast<MessageEvent.DeleteUser, string>(socket, {
+      event: MessageEvent.DeleteUser,
+      data: socket.userId,
+    });
   }
 
   private handleMoveCursor(
@@ -153,8 +162,8 @@ export default class WebSocketManager {
     }
 
     user.moveCursor(data);
-    this.broadcast<MessageEvent.MovedCursor, MovedCursorData>(socket, {
-      event: MessageEvent.MovedCursor,
+    this.broadcast<MessageEvent.UpdateCursor, MovedCursorData>(socket, {
+      event: MessageEvent.UpdateCursor,
       data: { userId: socket.userId, position: data },
     });
   }
@@ -167,12 +176,17 @@ export default class WebSocketManager {
 
           clearInterval(interval);
 
-          if (!socket.roomId) return;
+          if (!socket.userId || !socket.roomId) return;
 
-          const room = this.state.getRoom(socket.roomId as string);
+          const room = this.state.getRoom(socket.roomId);
           if (room) {
-            room.deleteUser(socket.userId as string);
+            room.deleteUser(socket.userId);
           }
+
+          this.broadcast<MessageEvent.DeleteUser, string>(socket, {
+            event: MessageEvent.DeleteUser,
+            data: socket.userId,
+          });
         }
       });
     }, ms);

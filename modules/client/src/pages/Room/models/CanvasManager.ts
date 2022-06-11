@@ -1,9 +1,7 @@
 import Position from '../../../models/Position';
 import type CanvasSettings from '../types/CanvasSettings';
 import CanvasState, { SetStateFn } from '../types/CanvasState';
-import type {
-  MessageHandler,
-} from '../../../types/Message';
+import type { MessageHandler } from '../../../types/Message';
 import { MessageEvent } from '../../../types/Event';
 
 export default class CanvasManager {
@@ -11,7 +9,7 @@ export default class CanvasManager {
     isDragging: false,
     cursorPosition: new Position(0, 0),
     scale: 1,
-    cursors: {},
+    users: {},
   };
   private readonly ctx: CanvasRenderingContext2D;
   private drawHandle = 0;
@@ -51,6 +49,22 @@ export default class CanvasManager {
     ctx.fillRect(canvas.width / 2 - 25, canvas.height / 2 - 25, 50, 50);
   }
 
+  private drawCursors(): void {
+    const { ctx } = this;
+
+    Object.values(this.state.users).forEach(
+      ({
+        cursor: {
+          color,
+          position: { x, y },
+        },
+      }) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, 5, 5);
+      },
+    );
+  }
+
   calculateCanvasCursorPosition(x: number, y: number): Position {
     return new Position(x - this.canvas.offsetLeft, y - this.canvas.offsetTop);
   }
@@ -58,6 +72,7 @@ export default class CanvasManager {
   draw(): void {
     this.drawBackground();
     this.drawObjects();
+    this.drawCursors();
     this.drawHandle = requestAnimationFrame(this.draw.bind(this));
   }
 
@@ -83,10 +98,12 @@ export default class CanvasManager {
       (currentScale > 1 && state.scale < maxZoom) ||
       (currentScale < 1 && state.scale > minZoom)
     ) {
-      state.scale =
+      this.setState(
+        'scale',
         currentScale > 1
           ? Math.min(maxZoom, state.scale * currentScale)
-          : Math.max(minZoom, state.scale * currentScale);
+          : Math.max(minZoom, state.scale * currentScale),
+      );
 
       const pointData = new Position(
         e.clientX - canvas.offsetLeft,
@@ -106,13 +123,10 @@ export default class CanvasManager {
   private handleMoveStart(e: MouseEvent): void {
     e.preventDefault();
 
-    const { state } = this;
-
-    state.isDragging = true;
+    this.setState('isDragging', true);
 
     const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
-    state.cursorPosition.x = x;
-    state.cursorPosition.y = y;
+    this.setState('cursorPosition', new Position(x, y));
   }
 
   private handleMove(e: MouseEvent): void {
@@ -134,16 +148,12 @@ export default class CanvasManager {
     tr.translateSelf(offsetLeft, offsetTop);
     ctx.setTransform(tr);
 
-    state.cursorPosition.x = x;
-    state.cursorPosition.y = y;
+    this.setState('cursorPosition', new Position(x, y));
   }
 
   private handleMoveEnd(): void {
-    const { state } = this;
-
-    state.isDragging = false;
-    state.cursorPosition.x = 0;
-    state.cursorPosition.x = 0;
+    this.setState('isDragging', false);
+    this.setState('cursorPosition', new Position(0, 0));
   }
 
   setState: SetStateFn = (field, value) => {

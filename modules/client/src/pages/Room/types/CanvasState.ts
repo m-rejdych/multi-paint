@@ -1,11 +1,11 @@
 import type Position from '../../../models/Position';
-import type Cursor from '../../../types/Cursor';
+import type User from '../../../types/User';
 
 export default interface CanvasState {
   isDragging: boolean;
   cursorPosition: Position;
   scale: number;
-  cursors: Record<string, Cursor>;
+  users: Record<string, User>;
 }
 
 export type SetStateFn = <T extends keyof CanvasState>(

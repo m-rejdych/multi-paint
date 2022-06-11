@@ -11,6 +11,8 @@ import type {
   JoinRoomMessageData,
   JoinedRoomMessage,
   MovedCursorMessage,
+  AddUserMessage,
+  DeleteUserMessage,
 } from '../types/Message';
 import type { SetStateFn } from '../pages/Room/types/CanvasState';
 import type User from '../types/User';
@@ -56,8 +58,14 @@ const useWebSocketHandlers = (
       case MessageEventKind.JoinedRoom:
         handleJoinedRoomMessage(message as JoinedRoomMessage);
         break;
-      case MessageEventKind.MovedCursor:
+      case MessageEventKind.UpdateCursor:
         handleMovedCursorMessage(message as MovedCursorMessage);
+        break;
+      case MessageEventKind.AddUser:
+        handleAddUserMessage(message as AddUserMessage);
+        break;
+      case MessageEventKind.DeleteUser:
+        handleDeleteUserMessage(message as DeleteUserMessage);
         break;
       default:
         console.log(message);
@@ -65,16 +73,17 @@ const useWebSocketHandlers = (
     }
   };
 
-  const handleJoinedRoomMessage = (message: JoinedRoomMessage): void => {
-    const { user, room } = message.data;
+  const handleJoinedRoomMessage = ({
+    data: { user, room },
+  }: JoinedRoomMessage): void => {
     userRef.current = user;
     roomRef.current = room;
 
     setCanvasState.current?.(
-      'cursors',
+      'users',
       Object.entries(room.users).reduce(
-        (acc, [id, { cursor }]) =>
-          id === user.id ? acc : { ...acc, [id]: cursor },
+        (acc, [id, roomUser]) =>
+          id === user.id ? acc : { ...acc, [id]: roomUser },
         {},
       ),
     );
@@ -83,10 +92,27 @@ const useWebSocketHandlers = (
   const handleMovedCursorMessage = ({
     data: { userId, position },
   }: MovedCursorMessage): void => {
-    setCanvasState.current?.('cursors', (prev) => ({
-      ...prev,
-      [userId]: { ...prev[userId], position },
+    setCanvasState.current?.('users', (users) => ({
+      ...users,
+      [userId]: {
+        ...users[userId],
+        cursor: { ...users[userId].cursor, position },
+      },
     }));
+  };
+
+  const handleAddUserMessage = ({ data }: AddUserMessage): void => {
+    setCanvasState.current?.('users', (users) => ({
+      ...users,
+      [data.id]: data,
+    }));
+  };
+
+  const handleDeleteUserMessage = ({ data }: DeleteUserMessage): void => {
+    setCanvasState.current?.('users', (users) => {
+      delete users[data];
+      return users;
+    });
   };
 
   const handleError = (error: Event): void => {

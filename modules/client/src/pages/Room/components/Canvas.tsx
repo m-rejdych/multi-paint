@@ -2,14 +2,10 @@ import type { FC } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
-import useWebSocketHandlers from '../../../hooks/useWebSocketHandlers';
 
 const Canvas: FC = () => {
-  const { handleSendMessage } = useWebSocketHandlers(
-    process.env.WS_URL as string,
-  );
 
-  const canvasRef = useCanvas(handleSendMessage);
+  const canvasRef = useCanvas();
 
   return (
     <Box borderRadius="md" overflow="hidden" cursor="grab">

@@ -1,7 +1,9 @@
-import Position from './Position';
+import Position from '../../../models/Position';
 import type CanvasSettings from '../types/CanvasSettings';
-import type CanvasState from '../types/CanvasState';
-import type { MessageHandler } from '../../../types/Message';
+import CanvasState, { SetStateFn } from '../types/CanvasState';
+import type {
+  MessageHandler,
+} from '../../../types/Message';
 import { MessageEvent } from '../../../types/Event';
 
 export default class CanvasManager {
@@ -9,6 +11,7 @@ export default class CanvasManager {
     isDragging: false,
     cursorPosition: new Position(0, 0),
     scale: 1,
+    cursors: {},
   };
   private readonly ctx: CanvasRenderingContext2D;
   private drawHandle = 0;
@@ -29,13 +32,13 @@ export default class CanvasManager {
   private drawBackground(): void {
     const {
       ctx,
-      settings: { BG_COLOR },
+      settings: { bgColor },
       canvas,
     } = this;
 
     ctx.save();
     ctx.resetTransform();
-    ctx.fillStyle = BG_COLOR;
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
   }
@@ -68,22 +71,22 @@ export default class CanvasManager {
     e.preventDefault();
 
     const {
-      settings: { SCALE_FACTOR, MAX_ZOOM, MIN_ZOOM },
+      settings: { scaleFactor, maxZoom, minZoom },
       state,
       ctx,
       canvas,
     } = this;
 
-    const currentScale = 1 + (e.deltaY > 0 ? SCALE_FACTOR : -SCALE_FACTOR);
+    const currentScale = 1 + (e.deltaY > 0 ? scaleFactor : -scaleFactor);
 
     if (
-      (currentScale > 1 && state.scale < MAX_ZOOM) ||
-      (currentScale < 1 && state.scale > MIN_ZOOM)
+      (currentScale > 1 && state.scale < maxZoom) ||
+      (currentScale < 1 && state.scale > minZoom)
     ) {
       state.scale =
         currentScale > 1
-          ? Math.min(MAX_ZOOM, state.scale * currentScale)
-          : Math.max(MIN_ZOOM, state.scale * currentScale);
+          ? Math.min(maxZoom, state.scale * currentScale)
+          : Math.max(minZoom, state.scale * currentScale);
 
       const pointData = new Position(
         e.clientX - canvas.offsetLeft,
@@ -142,6 +145,12 @@ export default class CanvasManager {
     state.cursorPosition.x = 0;
     state.cursorPosition.x = 0;
   }
+
+  setState: SetStateFn = (field, value) => {
+    this.state[field] =
+      typeof value === 'function' ? value(this.state[field]) : value;
+    console.log(this.state);
+  };
 
   registerHandlers(): void {
     const { canvas } = this;

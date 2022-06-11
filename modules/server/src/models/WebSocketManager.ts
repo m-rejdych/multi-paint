@@ -26,7 +26,7 @@ export default class WebSocketManager {
 
     socket.on(WebSocketEvent.Message, this.handleMessage(socket).bind(this));
     socket.on(WebSocketEvent.Close, this.handleClose.bind(this));
-    socket.on(WebSocketEvent.Error, this.handleError.bind(this));
+    socket.on(WebSocketEvent.Error, this.logError.bind(this));
   }
 
   private handleClose(): void {
@@ -54,9 +54,11 @@ export default class WebSocketManager {
     };
   }
 
-  private handleError(error: Error): never {
+  private logError(error: Error, shouldThrow = false): void {
     log.error('ERROR', error.message);
-    throw error;
+    if (shouldThrow) {
+      throw error;
+    }
   }
 
   private handleSendMessage<T extends MessageEvent, U>(
@@ -65,7 +67,7 @@ export default class WebSocketManager {
   ): void {
     socket.send(JSON.stringify(message), (err) => {
       if (err) {
-        this.handleError(err);
+        this.logError(err);
       }
     });
   }
@@ -77,18 +79,19 @@ export default class WebSocketManager {
   ): void {
     const room = this.state.getRoom(roomId);
     if (!room) {
-      this.handleError(new Error(`Room not found: "${roomId}"`));
+      this.logError(new Error(`Room not found: "${roomId}"`));
+      return;
     }
 
     if (socket.userId) {
       if (socket.roomId === room.id) {
         if (!room.isJoined(socket.userId)) {
-          this.handleError(new Error("User not included in room's state"));
+          this.logError(new Error("User not included in room's state"));
         }
         return;
       }
 
-      this.handleError(new Error('This users is in other room'));
+      this.logError(new Error('This users is in other room'));
     }
 
     const user = room.addUser(username);
@@ -106,20 +109,23 @@ export default class WebSocketManager {
   // TODO: Emit error event to client socket
   private handleLeaveRoom(socket: WebSocket.WebSocket): void {
     if (!socket.userId || !socket.roomId) {
-      this.handleError(new Error('Unknown socket'));
+      this.logError(new Error('Unknown socket'));
+      return;
     }
 
     const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      this.handleError(new Error(`Room not found: "${socket.roomId}"`));
+      this.logError(new Error(`Room not found: "${socket.roomId}"`));
+      return;
     }
 
-    if (!room.getUser(socket.userId)) {
-      this.handleError(
+    if (!room.isJoined(socket.userId)) {
+      this.logError(
         new Error(
           `User not found: "${socket.userId}" in room: ${socket.roomId}`,
         ),
       );
+      return;
     }
 
     room.deleteUser(socket.userId);
@@ -130,17 +136,20 @@ export default class WebSocketManager {
     { data }: MoveCursorMessage,
   ): void {
     if (!socket.userId || !socket.roomId) {
-      this.handleError(new Error('Unknown socket'));
+      this.logError(new Error('Unknown socket'));
+      return;
     }
 
     const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      this.handleError(new Error('Room not fund'));
+      this.logError(new Error('Room not fund'));
+      return;
     }
 
     const user = room.getUser(socket.userId);
     if (!user) {
-      this.handleError(new Error('User not fund'));
+      this.logError(new Error('User not fund'));
+      return;
     }
 
     user.moveCursor(data);
@@ -174,12 +183,14 @@ export default class WebSocketManager {
     message: Message<T, U>,
   ): void {
     if (!socket.userId || !socket.roomId) {
-      this.handleError(new Error('Unknown socket'));
+      this.logError(new Error('Unknown socket'));
+      return;
     }
 
     const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      this.handleError(new Error('Room not found'));
+      this.logError(new Error('Room not found'));
+      return;
     }
 
     Array.from(this.wss.clients)
@@ -201,7 +212,7 @@ export default class WebSocketManager {
       WebSocketServerEvent.Connection,
       this.handleConnection.bind(this),
     );
-    this.wss.on(WebSocketServerEvent.Error, this.handleError.bind(this));
+    this.wss.on(WebSocketServerEvent.Error, this.logError.bind(this));
     this.wss.on(WebSocketServerEvent.Close, this.unregisterHandlers.bind(this));
   }
 }

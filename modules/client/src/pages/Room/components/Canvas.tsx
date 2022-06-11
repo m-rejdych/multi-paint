@@ -2,14 +2,14 @@ import type { FC } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
-import type { MessageHandler } from '../../../types/Message';
+import useWebSocketHandlers from '../../../hooks/useWebSocketHandlers';
 
-interface Props {
-  onSocketMessage: MessageHandler;
-}
+const Canvas: FC = () => {
+  const { handleSendMessage } = useWebSocketHandlers(
+    process.env.WS_URL as string,
+  );
 
-const Canvas: FC<Props> = ({ onSocketMessage }) => {
-  const canvasRef = useCanvas(onSocketMessage);
+  const canvasRef = useCanvas(handleSendMessage);
 
   return (
     <Box borderRadius="md" overflow="hidden" cursor="grab">

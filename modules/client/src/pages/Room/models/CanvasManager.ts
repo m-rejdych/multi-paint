@@ -9,6 +9,7 @@ export default class CanvasManager {
     isDragging: false,
     cursorPosition: new Position(0, 0),
     scale: 1,
+    translate: new Position(0, 0),
     users: {},
   };
   private readonly ctx: CanvasRenderingContext2D;
@@ -50,7 +51,7 @@ export default class CanvasManager {
   }
 
   private drawCursors(): void {
-    const { ctx } = this;
+    const { ctx, canvas } = this;
 
     Object.values(this.state.users).forEach(
       ({
@@ -58,15 +59,34 @@ export default class CanvasManager {
           color,
           position: { x, y },
         },
+        username,
       }) => {
+        const originX = x + canvas.width / 2;
+        const originY = y + canvas.width / 2;
+
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, 5, 5);
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX + 15, originY + 5);
+        ctx.lineTo(originX + 5, originY + 15);
+        ctx.lineTo(originX, originY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = this.settings.textColor;
+        const { width } = ctx.measureText(username);
+        ctx.strokeText(username, x - width / 2, y - 5);
       },
     );
   }
 
-  calculateCanvasCursorPosition(x: number, y: number): Position {
-    return new Position(x - this.canvas.offsetLeft, y - this.canvas.offsetTop);
+  calculateCanvasOriginCursorPosition(x: number, y: number): Position {
+    const { canvas } = this;
+    return new Position(
+      x - canvas.offsetLeft - canvas.width / 2,
+      y - canvas.offsetTop - canvas.width / 2,
+    );
   }
 
   draw(): void {
@@ -112,11 +132,12 @@ export default class CanvasManager {
       const point = new DOMPoint(pointData.x, pointData.y);
 
       const tr = ctx.getTransform();
+      point.matrixTransform(tr);
+
       tr.translateSelf(point.x, point.y);
       tr.scaleSelf(currentScale, currentScale);
       tr.translateSelf(-point.x, -point.y);
       ctx.setTransform(tr);
-      point.matrixTransform(tr);
     }
   }
 
@@ -125,30 +146,43 @@ export default class CanvasManager {
 
     this.setState('isDragging', true);
 
-    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+    const { x, y } = this.calculateCanvasOriginCursorPosition(
+      e.clientX,
+      e.clientY,
+    );
     this.setState('cursorPosition', new Position(x, y));
   }
 
   private handleMove(e: MouseEvent): void {
-    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+    const { x, y } = this.calculateCanvasOriginCursorPosition(
+      e.clientX,
+      e.clientY,
+    );
+    const { state, ctx } = this;
+
+    if (this.state.isDragging) {
+      const offsetLeft = (x - state.cursorPosition.x) / state.scale;
+      const offsetTop = (y - state.cursorPosition.y) / state.scale;
+
+      this.setState(
+        'translate',
+        (prev) => new Position(prev.x - offsetLeft, prev.y - offsetTop),
+      );
+
+      const tr = ctx.getTransform();
+      tr.translateSelf(offsetLeft, offsetTop);
+      ctx.setTransform(tr);
+
+      this.setState('cursorPosition', new Position(x, y));
+    }
 
     this.messageHandler<MessageEvent.MoveCursor, Position>({
       event: MessageEvent.MoveCursor,
-      data: new Position(x, y),
+      data: new Position(
+        (x + state.translate.x * state.scale) / state.scale,
+        (y + state.translate.y * state.scale) / state.scale,
+      ),
     });
-
-    if (!this.state.isDragging) return;
-
-    const { state, ctx } = this;
-
-    const offsetLeft = x - state.cursorPosition.x;
-    const offsetTop = y - state.cursorPosition.y;
-
-    const tr = ctx.getTransform();
-    tr.translateSelf(offsetLeft, offsetTop);
-    ctx.setTransform(tr);
-
-    this.setState('cursorPosition', new Position(x, y));
   }
 
   private handleMoveEnd(): void {
@@ -159,7 +193,6 @@ export default class CanvasManager {
   setState: SetStateFn = (field, value) => {
     this.state[field] =
       typeof value === 'function' ? value(this.state[field]) : value;
-    console.log(this.state);
   };
 
   registerHandlers(): void {

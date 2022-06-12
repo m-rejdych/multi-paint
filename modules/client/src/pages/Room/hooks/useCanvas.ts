@@ -6,6 +6,7 @@ import type { SetStateFn } from '../types/CanvasState';
 
 const SCALE_FACTOR = 0.01;
 const BG_COLOR = '#FBFBFB';
+const TEXT_COLOR = '#000000';
 const MAX_ZOOM = 10;
 const MIN_ZOOM = 0.1;
 
@@ -29,6 +30,7 @@ const useCanvas = (): RefObject<HTMLCanvasElement> => {
         maxZoom: MAX_ZOOM,
         minZoom: MIN_ZOOM,
         bgColor: BG_COLOR,
+        textColor: TEXT_COLOR,
       },
     );
 

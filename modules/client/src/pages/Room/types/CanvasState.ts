@@ -5,6 +5,7 @@ export default interface CanvasState {
   isDragging: boolean;
   cursorPosition: Position;
   scale: number;
+  translate: Position;
   users: Record<string, User>;
 }
 

@@ -44,10 +44,10 @@ export default class CanvasManager {
 
   // Mock object for now
   private drawObjects(): void {
-    const { ctx, canvas } = this;
+    const { ctx } = this;
 
     ctx.fillStyle = '#000000';
-    ctx.fillRect(canvas.width / 2 - 25, canvas.height / 2 - 25, 50, 50);
+    ctx.fillRect(200, 200, 50, 50);
   }
 
   private drawCursors(): void {

@@ -51,7 +51,7 @@ export default class CanvasManager {
   }
 
   private drawCursors(): void {
-    const { ctx, canvas } = this;
+    const { ctx } = this;
 
     Object.values(this.state.users).forEach(
       ({
@@ -61,16 +61,13 @@ export default class CanvasManager {
         },
         username,
       }) => {
-        const originX = x + canvas.width / 2;
-        const originY = y + canvas.width / 2;
-
         ctx.fillStyle = color;
         ctx.strokeStyle = color;
         ctx.beginPath();
-        ctx.moveTo(originX, originY);
-        ctx.lineTo(originX + 15, originY + 5);
-        ctx.lineTo(originX + 5, originY + 15);
-        ctx.lineTo(originX, originY);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 15, y + 5);
+        ctx.lineTo(x + 5, y + 15);
+        ctx.lineTo(x, y);
         ctx.closePath();
         ctx.fill();
 
@@ -81,11 +78,11 @@ export default class CanvasManager {
     );
   }
 
-  calculateCanvasOriginCursorPosition(x: number, y: number): Position {
+  calculateCanvasCursorPosition(x: number, y: number): Position {
     const { canvas } = this;
     return new Position(
-      x - canvas.offsetLeft - canvas.width / 2,
-      y - canvas.offsetTop - canvas.width / 2,
+      x - canvas.offsetLeft,
+      y - canvas.offsetTop,
     );
   }
 
@@ -109,52 +106,44 @@ export default class CanvasManager {
       settings: { scaleFactor, maxZoom, minZoom },
       state,
       ctx,
-      canvas,
     } = this;
-
-    const currentScale = 1 + (e.deltaY > 0 ? scaleFactor : -scaleFactor);
+    const wheel = e.deltaY < 0 ? 1 : -1;
+    const zoom = Math.exp(wheel * scaleFactor);
 
     if (
-      (currentScale > 1 && state.scale < maxZoom) ||
-      (currentScale < 1 && state.scale > minZoom)
+      (zoom > 1 && state.scale < maxZoom) ||
+      (zoom < 1 && state.scale > minZoom)
     ) {
-      this.setState(
-        'scale',
-        currentScale > 1
-          ? Math.min(maxZoom, state.scale * currentScale)
-          : Math.max(minZoom, state.scale * currentScale),
-      );
-
-      const pointData = new Position(
-        e.clientX - canvas.offsetLeft,
-        e.clientY - canvas.offsetTop,
-      );
-      const point = new DOMPoint(pointData.x, pointData.y);
+      const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
 
       const tr = ctx.getTransform();
-      point.matrixTransform(tr);
 
-      tr.translateSelf(point.x, point.y);
-      tr.scaleSelf(currentScale, currentScale);
-      tr.translateSelf(-point.x, -point.y);
+      tr.translateSelf(state.translate.x, state.translate.y);
+      tr.scaleSelf(zoom, zoom);
+
+      this.setState(
+        'translate',
+        (prev) =>
+          new Position(
+            prev.x - (x / (state.scale * zoom) - x / state.scale),
+            prev.y - (y / (state.scale * zoom) - y / state.scale),
+          ),
+      );
+
+      tr.translateSelf(-state.translate.x, -state.translate.y);
       ctx.setTransform(tr);
+
+      this.setState('scale', (prev) => prev * zoom);
     }
   }
 
   private handleMoveStart(e: MouseEvent): void {
     e.preventDefault();
-
     this.setState('isDragging', true);
-
-    const { x, y } = this.calculateCanvasOriginCursorPosition(
-      e.clientX,
-      e.clientY,
-    );
-    this.setState('cursorPosition', new Position(x, y));
   }
 
   private handleMove(e: MouseEvent): void {
-    const { x, y } = this.calculateCanvasOriginCursorPosition(
+    const { x, y } = this.calculateCanvasCursorPosition(
       e.clientX,
       e.clientY,
     );
@@ -172,10 +161,9 @@ export default class CanvasManager {
       const tr = ctx.getTransform();
       tr.translateSelf(offsetLeft, offsetTop);
       ctx.setTransform(tr);
-
-      this.setState('cursorPosition', new Position(x, y));
     }
 
+    this.setState('cursorPosition', new Position(x, y));
     this.messageHandler<MessageEvent.MoveCursor, Position>({
       event: MessageEvent.MoveCursor,
       data: new Position(
@@ -187,7 +175,6 @@ export default class CanvasManager {
 
   private handleMoveEnd(): void {
     this.setState('isDragging', false);
-    this.setState('cursorPosition', new Position(0, 0));
   }
 
   setState: SetStateFn = (field, value) => {

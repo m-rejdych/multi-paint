@@ -4,7 +4,7 @@ import useWebSocketHandlers from '../../../hooks/useWebSocketHandlers';
 import CanvasManager from '../models/CanvasManager';
 import type { SetStateFn } from '../types/CanvasState';
 
-const SCALE_FACTOR = 0.01;
+const SCALE_FACTOR = 0.02;
 const BG_COLOR = '#FBFBFB';
 const TEXT_COLOR = '#000000';
 const MAX_ZOOM = 10;

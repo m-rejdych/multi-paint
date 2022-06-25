@@ -1,4 +1,4 @@
-import { PanToolAlt, Brush } from '@mui/icons-material';
+import { PanTool, Brush } from '@mui/icons-material';
 
 import { type Tool, ToolType } from '../types/Tool';
 
@@ -7,7 +7,7 @@ const TOOLS: Tool[] = [
     id: 'pan-tool',
     type: ToolType.Pan,
     tooltip: 'Pan tool',
-    Icon: PanToolAlt,
+    Icon: PanTool,
   },
   {
     id: 'brush-tool',

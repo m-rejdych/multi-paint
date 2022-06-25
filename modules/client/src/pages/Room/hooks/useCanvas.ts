@@ -3,6 +3,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 import useWebSocketHandlers from '../../../hooks/useWebSocketHandlers';
 import CanvasManager from '../models/CanvasManager';
 import type { SetStateFn } from '../types/CanvasState';
+import type { ToolType } from '../types/Tool';
 
 const SCALE_FACTOR = 0.02;
 const BG_COLOR = '#FBFBFB';
@@ -10,7 +11,7 @@ const TEXT_COLOR = '#000000';
 const MAX_ZOOM = 10;
 const MIN_ZOOM = 0.1;
 
-const useCanvas = (): RefObject<HTMLCanvasElement> => {
+const useCanvas = (tool: ToolType): RefObject<HTMLCanvasElement> => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasSetStateFn = useRef<SetStateFn>(() => {});
 
@@ -24,6 +25,7 @@ const useCanvas = (): RefObject<HTMLCanvasElement> => {
 
     const canvasManager = new CanvasManager(
       canvasRef.current,
+      tool,
       handleSendMessage,
       {
         scaleFactor: SCALE_FACTOR,

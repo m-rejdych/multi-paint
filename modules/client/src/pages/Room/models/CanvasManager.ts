@@ -3,6 +3,7 @@ import type CanvasSettings from '../types/CanvasSettings';
 import CanvasState, { SetStateFn } from '../types/CanvasState';
 import type { MessageHandler } from '../../../types/Message';
 import { MessageEvent } from '../../../types/Event';
+import { ToolType } from '../types/Tool';
 
 export default class CanvasManager {
   private state: CanvasState = {
@@ -17,6 +18,7 @@ export default class CanvasManager {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
+    private readonly tool: ToolType,
     private readonly messageHandler: MessageHandler,
     private readonly settings: CanvasSettings,
   ) {
@@ -26,6 +28,7 @@ export default class CanvasManager {
     }
 
     this.ctx = ctx;
+    console.log(this.tool);
   }
 
   private drawBackground(): void {

@@ -19,11 +19,11 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
-        test: /\.css/,
+        test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\.(jpe?g|png|svg)/,
+        test: /\.(jpe?g|png|svg)$/,
         type: 'asset/resource',
       },
     ],

@@ -2,17 +2,33 @@ import { type FC, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
+import Brush from '../../../images/brush.png';
+import { ToolType } from '../types/Tool';
 
-const Canvas: FC = () => {
+interface Props {
+  tool: ToolType;
+}
+
+const Canvas: FC<Props> = ({ tool }) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  const canvasRef = useCanvas();
+  const canvasRef = useCanvas(tool);
+
+  const getCursor = (): string => {
+    switch (tool)  {
+      case ToolType.Brush:
+      return `url(${Brush}), auto`;
+      case ToolType.Pan:
+      default:
+      return isDragging ? 'grabbing' : 'grab';
+    }
+  }
 
   return (
     <Box
       borderRadius="md"
       overflow="hidden"
-      cursor={isDragging ? 'grabbing' : 'grab'}
+      cursor={getCursor()}
     >
       <canvas
         width={innerHeight - 229}

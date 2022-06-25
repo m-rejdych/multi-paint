@@ -12,9 +12,8 @@ interface Props {
 const Toolbar: FC<Props> = ({ onSelectTool, selectedTool, tools }) => (
   <HStack spacing={4}>
     {tools.map(({ id, Icon, type, tooltip }) => (
-      <Tooltip label={tooltip}>
+      <Tooltip key={id} label={tooltip}>
         <IconButton
-          key={id}
           aria-label={id}
           icon={<Icon />}
           isActive={selectedTool === type}

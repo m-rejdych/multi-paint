@@ -28,7 +28,7 @@ const Room: FC = () => {
         <Toolbar selectedTool={tool} onSelectTool={setTool} tools={TOOLS} />
       </Flex>
       <Flex flexGrow={1} justifyContent="center" alignItems="center">
-        <Canvas />
+        <Canvas tool={tool} />
       </Flex>
     </VStack>
   );

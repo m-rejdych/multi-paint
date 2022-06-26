@@ -2,8 +2,8 @@ import { type FC, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
-import Brush from '../../../images/brush.png';
-import { ToolType } from '../types/Tool';
+// import Brush from '../../../images/brush.png';
+import { ToolType } from '../../../types/Tool';
 
 interface Props {
   tool: ToolType;
@@ -17,7 +17,7 @@ const Canvas: FC<Props> = ({ tool }) => {
   const getCursor = (): string => {
     switch (tool)  {
       case ToolType.Brush:
-      return `url(${Brush}), auto`;
+      return `default`;
       case ToolType.Pan:
       default:
       return isDragging ? 'grabbing' : 'grab';

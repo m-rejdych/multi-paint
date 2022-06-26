@@ -7,7 +7,7 @@ import Canvas from './components/Canvas';
 import Toolbar from './components/Toolbar';
 import TOOLS from './constants/tools';
 import type RoomLocationState from '../../types/RoomsLocationState';
-import { ToolType } from './types/Tool';
+import { ToolType } from '../../types/Tool';
 
 const Room: FC = () => {
   const [tool, setTool] = useState(ToolType.Pan);

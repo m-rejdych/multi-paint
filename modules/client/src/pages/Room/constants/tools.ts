@@ -1,6 +1,6 @@
 import { PanTool, Brush } from '@mui/icons-material';
 
-import { type Tool, ToolType } from '../types/Tool';
+import { type Tool, ToolType } from '../../../types/Tool';
 
 const TOOLS: Tool[] = [
   {

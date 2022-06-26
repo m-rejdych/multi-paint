@@ -1,9 +1,11 @@
 import Position from '../../../models/Position';
+import Line from '../../../models/Line';
+import Color from '../../../types/Color';
 import type CanvasSettings from '../types/CanvasSettings';
 import CanvasState, { SetStateFn } from '../types/CanvasState';
 import type { MessageHandler } from '../../../types/Message';
 import { MessageEvent } from '../../../types/Event';
-import { ToolType } from '../types/Tool';
+import { ToolType } from '../../../types/Tool';
 
 export default class CanvasManager {
   private state: CanvasState = {
@@ -12,13 +14,14 @@ export default class CanvasManager {
     scale: 1,
     translate: new Position(0, 0),
     users: {},
+    tool: ToolType.Pan,
+    lines: [],
   };
   private readonly ctx: CanvasRenderingContext2D;
   private drawHandle = 0;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly tool: ToolType,
     private readonly messageHandler: MessageHandler,
     private readonly settings: CanvasSettings,
   ) {
@@ -28,7 +31,6 @@ export default class CanvasManager {
     }
 
     this.ctx = ctx;
-    console.log(this.tool);
   }
 
   private drawBackground(): void {
@@ -51,6 +53,33 @@ export default class CanvasManager {
 
     ctx.fillStyle = '#000000';
     ctx.fillRect(200, 200, 50, 50);
+  }
+
+  // TODO
+  private drawLines(): void {
+    const { ctx } = this;
+
+    this.state.lines.forEach(({ color, size, points }) => {
+      points.forEach(({ x, y }, index, self) => {
+        const prevPoint = self[index - 1];
+        if (!prevPoint) {
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.arc(x, y, size / 2, 0, 360);
+          ctx.fill();
+          ctx.closePath();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(prevPoint.x, prevPoint.y);
+          ctx.lineTo(x, y);
+          ctx.lineWidth = size;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = color;
+          ctx.stroke();
+          ctx.closePath();
+        }
+      });
+    });
   }
 
   private drawCursors(): void {
@@ -83,14 +112,12 @@ export default class CanvasManager {
 
   calculateCanvasCursorPosition(x: number, y: number): Position {
     const { canvas } = this;
-    return new Position(
-      x - canvas.offsetLeft,
-      y - canvas.offsetTop,
-    );
+    return new Position(x - canvas.offsetLeft, y - canvas.offsetTop);
   }
 
   draw(): void {
     this.drawBackground();
+    this.drawLines();
     this.drawObjects();
     this.drawCursors();
     this.drawHandle = requestAnimationFrame(this.draw.bind(this));
@@ -100,6 +127,22 @@ export default class CanvasManager {
     if (this.drawHandle) {
       cancelAnimationFrame(this.drawHandle);
     }
+  }
+
+  private translate(x: number, y: number): void {
+    const { state, ctx } = this;
+
+    const offsetLeft = (x - state.cursorPosition.x) / state.scale;
+    const offsetTop = (y - state.cursorPosition.y) / state.scale;
+
+    this.setState(
+      'translate',
+      (prev) => new Position(prev.x - offsetLeft, prev.y - offsetTop),
+    );
+
+    const tr = ctx.getTransform();
+    tr.translateSelf(offsetLeft, offsetTop);
+    ctx.setTransform(tr);
   }
 
   private handleZoom(e: WheelEvent): void {
@@ -143,27 +186,40 @@ export default class CanvasManager {
   private handleMoveStart(e: MouseEvent): void {
     e.preventDefault();
     this.setState('isDragging', true);
+    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+    const { state } = this;
+
+    if (this.state.tool === ToolType.Brush) {
+      const line = new Line(Color.Red, 5);
+      line.addPoint(
+        new Position(
+          (x + state.translate.x * state.scale) / state.scale,
+          (y + state.translate.y * state.scale) / state.scale,
+        ),
+      );
+      this.setState('lines', (prev) => [...prev, line]);
+    }
   }
 
   private handleMove(e: MouseEvent): void {
-    const { x, y } = this.calculateCanvasCursorPosition(
-      e.clientX,
-      e.clientY,
-    );
-    const { state, ctx } = this;
+    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+    const { state } = this;
 
     if (this.state.isDragging) {
-      const offsetLeft = (x - state.cursorPosition.x) / state.scale;
-      const offsetTop = (y - state.cursorPosition.y) / state.scale;
-
-      this.setState(
-        'translate',
-        (prev) => new Position(prev.x - offsetLeft, prev.y - offsetTop),
-      );
-
-      const tr = ctx.getTransform();
-      tr.translateSelf(offsetLeft, offsetTop);
-      ctx.setTransform(tr);
+      switch (state.tool) {
+        case ToolType.Pan:
+          this.translate(x, y);
+          break;
+        case ToolType.Brush:
+          state.lines[state.lines.length - 1].addPoint(
+            new Position(
+              (x + state.translate.x * state.scale) / state.scale,
+              (y + state.translate.y * state.scale) / state.scale,
+            ),
+          );
+        default:
+          break;
+      }
     }
 
     this.setState('cursorPosition', new Position(x, y));

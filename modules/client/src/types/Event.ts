@@ -13,5 +13,9 @@ export enum MessageEvent {
   UpdateCursor,
   AddUser,
   DeleteUser,
+  AddLine,
+  AddedLine,
+  AddLinePoint,
+  AddedLinePoint,
   Error,
 }

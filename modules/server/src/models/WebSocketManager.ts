@@ -12,9 +12,15 @@ import type {
   JoinedRoomMessageData,
   MoveCursorMessage,
   MovedCursorData,
+  AddLineMessage,
+  AddedLineMessageData,
+  AddLinePointMessage,
+  AddedLinePointMessageData,
 } from '../types/Message';
+import type AuthData from '../types/AuthData';
 import type State from './State';
 import type User from './User';
+import Line from './Line';
 
 export default class WebSocketManager {
   constructor(
@@ -48,6 +54,12 @@ export default class WebSocketManager {
           break;
         case MessageEvent.MoveCursor:
           this.handleMoveCursor(socket, message as MoveCursorMessage);
+          break;
+        case MessageEvent.AddLine:
+          this.handleAddLine(socket, message as AddLineMessage);
+          break;
+        case MessageEvent.AddLinePoint:
+          this.handleAddLinePoint(socket, message as AddLinePointMessage);
           break;
         default:
           break;
@@ -112,31 +124,23 @@ export default class WebSocketManager {
 
   // TODO: Emit error event to client socket
   private handleLeaveRoom(socket: WebSocket.WebSocket): void {
-    if (!socket.userId || !socket.roomId) {
-      this.logError(new Error('Unknown socket'));
-      return;
-    }
+    const authResult = this.authSocket(socket);
+    if (authResult instanceof Error) return;
 
-    const room = this.state.getRoom(socket.roomId);
-    if (!room) {
-      this.logError(new Error(`Room not found: "${socket.roomId}"`));
-      return;
-    }
+    const { user, room } = authResult;
 
-    if (!room.isJoined(socket.userId)) {
+    if (!room.isJoined(user.id)) {
       this.logError(
-        new Error(
-          `User not found: "${socket.userId}" in room: ${socket.roomId}`,
-        ),
+        new Error(`User not found: "${user.id}" in room: ${room.id}`),
       );
       return;
     }
 
-    room.deleteUser(socket.userId);
+    room.deleteUser(user.id);
 
     this.broadcast<MessageEvent.DeleteUser, string>(socket, {
       event: MessageEvent.DeleteUser,
-      data: socket.userId,
+      data: user.id,
     });
   }
 
@@ -144,28 +148,54 @@ export default class WebSocketManager {
     socket: WebSocket.WebSocket,
     { data }: MoveCursorMessage,
   ): void {
-    if (!socket.userId || !socket.roomId) {
-      this.logError(new Error('Unknown socket'));
-      return;
-    }
+    const authResult = this.authSocket(socket);
+    if (authResult instanceof Error) return;
 
-    const room = this.state.getRoom(socket.roomId);
-    if (!room) {
-      this.logError(new Error('Room not fund'));
-      return;
-    }
-
-    const user = room.getUser(socket.userId);
-    if (!user) {
-      this.logError(new Error('User not fund'));
-      return;
-    }
+    const { user } = authResult;
 
     user.moveCursor(data);
     this.broadcast<MessageEvent.UpdateCursor, MovedCursorData>(socket, {
       event: MessageEvent.UpdateCursor,
-      data: { userId: socket.userId, position: data },
+      data: { userId: user.id, position: data },
     });
+  }
+
+  private handleAddLine(
+    socket: WebSocket.WebSocket,
+    { data: { color, points, size } }: AddLineMessage,
+  ): void {
+    const authResult = this.authSocket(socket);
+    if (authResult instanceof Error) return;
+
+    const { user } = authResult;
+
+    const line = new Line(color, size, points);
+    user.addLine(line);
+
+    this.broadcast<MessageEvent.AddedLine, AddedLineMessageData>(socket, {
+      event: MessageEvent.AddedLine,
+      data: { line, userId: user.id },
+    });
+  }
+
+  private handleAddLinePoint(
+    socket: WebSocket.WebSocket,
+    { data }: AddLinePointMessage,
+  ): void {
+    const authResult = this.authSocket(socket);
+    if (authResult instanceof Error) return;
+
+    const { user } = authResult;
+
+    user.addLinePoint(data);
+
+    this.broadcast<MessageEvent.AddedLinePoint, AddedLinePointMessageData>(
+      socket,
+      {
+        event: MessageEvent.AddedLinePoint,
+        data: { point: data, userId: user.id },
+      },
+    );
   }
 
   private setPingInterval(socket: WebSocket.WebSocket, ms: number): void {
@@ -192,20 +222,38 @@ export default class WebSocketManager {
     }, ms);
   }
 
-  private broadcast<T extends MessageEvent, U>(
-    socket: WebSocket.WebSocket,
-    message: Message<T, U>,
-  ): void {
+  private authSocket(socket: WebSocket.WebSocket): Error | AuthData {
     if (!socket.userId || !socket.roomId) {
-      this.logError(new Error('Unknown socket'));
-      return;
+      const error = new Error('Unknown socket');
+      this.logError(error);
+      return error;
     }
 
     const room = this.state.getRoom(socket.roomId);
     if (!room) {
-      this.logError(new Error('Room not found'));
-      return;
+      const error = new Error('Room not fund');
+      this.logError(error);
+      return error;
     }
+
+    const user = room.getUser(socket.userId);
+    if (!user) {
+      const error = new Error('User not fund');
+      this.logError(error);
+      return error;
+    }
+
+    return { user, room };
+  }
+
+  private broadcast<T extends MessageEvent, U>(
+    socket: WebSocket.WebSocket,
+    message: Message<T, U>,
+  ): void {
+    const authResult = this.authSocket(socket);
+    if (authResult instanceof Error) return;
+
+    const { room } = authResult;
 
     Array.from(this.wss.clients)
       .filter(

@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { HStack, IconButton, Tooltip } from '@chakra-ui/react';
 
-import type { Tool, ToolType } from '../types/Tool';
+import type { Tool, ToolType } from '../../../types/Tool';
 
 interface Props {
   onSelectTool: (tool: ToolType) => void;

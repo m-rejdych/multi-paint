@@ -31,8 +31,8 @@ const Canvas: FC<Props> = ({ tool }) => {
       cursor={getCursor()}
     >
       <canvas
-        width={innerHeight - 229}
-        height={innerHeight - 229}
+        width={innerWidth}
+        height={innerHeight - 186}
         onMouseDown={() => setIsDragging(true)}
         onMouseUp={() => setIsDragging(false)}
         onMouseLeave={() => setIsDragging(false)}

@@ -13,11 +13,14 @@ import type {
   MovedCursorMessage,
   AddUserMessage,
   DeleteUserMessage,
+  AddedLineMessage,
+  AddedLinePointMessage,
 } from '../types/Message';
 import type { SetStateFn } from '../pages/Room/types/CanvasState';
 import type User from '../types/User';
 import type Room from '../types/Room';
 import type RoomLocationState from '../types/RoomsLocationState';
+import type Line from '../models/Line';
 
 interface RoomData {
   handleSendMessage: MessageHandler;
@@ -67,6 +70,12 @@ const useWebSocketHandlers = (
       case MessageEventKind.DeleteUser:
         handleDeleteUserMessage(message as DeleteUserMessage);
         break;
+      case MessageEventKind.AddedLine:
+        handleAddedLine(message as AddedLineMessage);
+        break;
+      case MessageEventKind.AddedLinePoint:
+        handleAddedLinePoint(message as AddedLinePointMessage);
+        break;
       default:
         console.log(message);
         break;
@@ -112,6 +121,43 @@ const useWebSocketHandlers = (
     setCanvasState.current?.('users', (users) => {
       delete users[data];
       return users;
+    });
+  };
+
+  const handleAddedLine = ({
+    data: { userId, line },
+  }: AddedLineMessage): void => {
+    setCanvasState.current?.('users', (users) => ({
+      ...users,
+      [userId]: {
+        ...users[userId],
+        lines: [...users[userId].lines, line],
+      },
+    }));
+  };
+
+  const handleAddedLinePoint = ({
+    data: { userId, point },
+  }: AddedLinePointMessage): void => {
+    setCanvasState.current?.('users', (users) => {
+      const user = users[userId];
+      if (!user) return users;
+
+      const { lines } = user;
+      const lastLine = lines[lines.length - 1];
+
+      return {
+        ...users,
+        [userId]: {
+          ...user,
+          lines: lastLine
+            ? [
+                ...lines.slice(0, -1),
+                { ...lastLine, points: [...lastLine.points, point] } as Line,
+              ]
+            : [],
+        },
+      };
     });
   };
 

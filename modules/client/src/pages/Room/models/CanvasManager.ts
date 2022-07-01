@@ -55,31 +55,37 @@ export default class CanvasManager {
     ctx.fillRect(200, 200, 50, 50);
   }
 
-  // TODO
-  private drawLines(): void {
+  private drawLine({ points, color, size }: Line): void {
     const { ctx } = this;
 
-    this.state.lines.forEach(({ color, size, points }) => {
-      points.forEach(({ x, y }, index, self) => {
-        const prevPoint = self[index - 1];
-        if (!prevPoint) {
-          ctx.beginPath();
-          ctx.fillStyle = color;
-          ctx.arc(x, y, size / 2, 0, 360);
-          ctx.fill();
-          ctx.closePath();
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(prevPoint.x, prevPoint.y);
-          ctx.lineTo(x, y);
-          ctx.lineWidth = size;
-          ctx.lineCap = 'round';
-          ctx.strokeStyle = color;
-          ctx.stroke();
-          ctx.closePath();
-        }
-      });
+    points.forEach(({ x, y }, index, self) => {
+      const prevPoint = self[index - 1];
+      if (!prevPoint) {
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(x, y, size / 2, 0, 360);
+        ctx.fill();
+        ctx.closePath();
+      } else {
+        ctx.beginPath();
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = color;
+        ctx.moveTo(prevPoint.x, prevPoint.y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.closePath();
+      }
     });
+  }
+
+  private drawLines(): void {
+    const { state } = this;
+
+    state.lines.forEach(this.drawLine.bind(this));
+    Object.values(state.users).forEach(({ lines }) =>
+      lines.forEach(this.drawLine.bind(this)),
+    );
   }
 
   private drawCursors(): void {
@@ -104,6 +110,7 @@ export default class CanvasManager {
         ctx.fill();
 
         ctx.strokeStyle = this.settings.textColor;
+        ctx.lineWidth = 1;
         const { width } = ctx.measureText(username);
         ctx.strokeText(username, x - width / 2, y - 5);
       },
@@ -198,6 +205,11 @@ export default class CanvasManager {
         ),
       );
       this.setState('lines', (prev) => [...prev, line]);
+
+      this.messageHandler<MessageEvent.AddLine, Line>({
+        event: MessageEvent.AddLine,
+        data: line,
+      });
     }
   }
 
@@ -211,12 +223,19 @@ export default class CanvasManager {
           this.translate(x, y);
           break;
         case ToolType.Brush:
-          state.lines[state.lines.length - 1].addPoint(
-            new Position(
-              (x + state.translate.x * state.scale) / state.scale,
-              (y + state.translate.y * state.scale) / state.scale,
-            ),
+          const point = new Position(
+            (x + state.translate.x * state.scale) / state.scale,
+            (y + state.translate.y * state.scale) / state.scale,
           );
+
+          state.lines[state.lines.length - 1].addPoint(point);
+
+          this.messageHandler<MessageEvent.AddLinePoint, Position>({
+            event: MessageEvent.AddLinePoint,
+            data: point,
+          });
+
+          break;
         default:
           break;
       }

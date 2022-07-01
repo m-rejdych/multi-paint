@@ -5,7 +5,7 @@ export default class Line {
   readonly points: Position[] = [];
 
   constructor(
-    public readonly color: Color,
+    public readonly color: Color | `#${string}`,
     public readonly size: number,
     points?: Position[],
   ) {

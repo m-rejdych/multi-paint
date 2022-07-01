@@ -1,17 +1,19 @@
 import { type FC, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
+import type Color from '../../../types/Color';
 import useCanvas from '../hooks/useCanvas';
 import { ToolType } from '../../../types/Tool';
 
 interface Props {
   tool: ToolType;
+  drawColor: Color | `#${string}`;
 }
 
-const Canvas: FC<Props> = ({ tool }) => {
+const Canvas: FC<Props> = ({ tool, drawColor }) => {
   const [isDragging, setIsDragging] = useState(false);
 
-  const canvasRef = useCanvas(tool);
+  const canvasRef = useCanvas(tool, drawColor);
 
   const getCursor = (): string => {
     switch (tool)  {

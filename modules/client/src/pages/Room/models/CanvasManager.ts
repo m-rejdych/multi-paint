@@ -15,6 +15,7 @@ export default class CanvasManager {
     translate: new Position(0, 0),
     users: {},
     tool: ToolType.Pan,
+    drawColor: Color.Red,
     lines: [],
   };
   private readonly ctx: CanvasRenderingContext2D;
@@ -192,11 +193,12 @@ export default class CanvasManager {
   private handleMoveStart(e: MouseEvent): void {
     e.preventDefault();
     this.setState('isDragging', true);
-    const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
-    const { state } = this;
 
     if (this.state.tool === ToolType.Brush) {
-      const line = new Line(Color.Red, 5);
+      const { x, y } = this.calculateCanvasCursorPosition(e.clientX, e.clientY);
+      const { state } = this;
+
+      const line = new Line(state.drawColor, 5);
       line.addPoint(
         new Position(
           (x + state.translate.x * state.scale) / state.scale,

@@ -2,6 +2,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 import useWebSocketHandlers from '../../../hooks/useWebSocketHandlers';
 import CanvasManager from '../models/CanvasManager';
+import type Color from '../../../types/Color';
 import type { SetStateFn } from '../types/CanvasState';
 import type { ToolType } from '../../../types/Tool';
 
@@ -11,7 +12,10 @@ const TEXT_COLOR = '#000000';
 const MAX_ZOOM = 10;
 const MIN_ZOOM = 0.1;
 
-const useCanvas = (tool: ToolType): RefObject<HTMLCanvasElement> => {
+const useCanvas = (
+  tool: ToolType,
+  drawColor: Color | `#${string}`,
+): RefObject<HTMLCanvasElement> => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasSetStateFn = useRef<SetStateFn>(() => {});
 
@@ -49,6 +53,10 @@ const useCanvas = (tool: ToolType): RefObject<HTMLCanvasElement> => {
   useEffect(() => {
     canvasSetStateFn.current?.('tool', tool);
   }, [tool]);
+
+  useEffect(() => {
+    canvasSetStateFn.current?.('drawColor', drawColor);
+  }, [drawColor]);
 
   return canvasRef;
 };

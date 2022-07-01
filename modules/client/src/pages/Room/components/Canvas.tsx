@@ -2,7 +2,6 @@ import { type FC, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import useCanvas from '../hooks/useCanvas';
-// import Brush from '../../../images/brush.png';
 import { ToolType } from '../../../types/Tool';
 
 interface Props {

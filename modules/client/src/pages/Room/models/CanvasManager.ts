@@ -89,7 +89,7 @@ export default class CanvasManager {
   }
 
   private drawCursors(): void {
-    const { ctx } = this;
+    const { ctx, settings } = this;
 
     Object.values(this.state.users).forEach(
       ({
@@ -109,10 +109,9 @@ export default class CanvasManager {
         ctx.closePath();
         ctx.fill();
 
-        ctx.strokeStyle = this.settings.textColor;
-        ctx.lineWidth = 1;
+        ctx.fillStyle = settings.textColor;
         const { width } = ctx.measureText(username);
-        ctx.strokeText(username, x - width / 2, y - 5);
+        ctx.fillText(username, x - width / 2, y - 5);
       },
     );
   }

@@ -4,7 +4,7 @@ const path = require('path');
 module.exports = {
   entry: './src/index.ts',
   output: {
-    filename: 'bundle[contenthash:8].js',
+    filename: 'bundle.[contenthash:8].js',
     path: path.resolve(__dirname, 'build'),
     publicPath: '/',
   },

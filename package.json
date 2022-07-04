@@ -9,7 +9,8 @@
     "dev:client": "npm start --prefix modules/client",
     "build:client": "npm run build --prefix modules/client",
     "start": "concurrently \"npm start --prefix modules/server\" \"npm start --prefix modules/client\"",
-    "install:all": "npm i && concurrently \"npm i --prefix modules/server\" \"npm i --prefix modules/client\""
+    "install:all": "npm i && concurrently \"npm i --prefix modules/server\" \"npm i --prefix modules/client\"",
+    "build:all": "npm run build --prefix modules/client && npm run build --prefix modules/server"
   },
   "keywords": [],
   "author": "",

@@ -2,6 +2,7 @@ import http from 'http';
 import express from 'express';
 import log from 'npmlog';
 import helmet from 'helmet';
+import cors from 'cors';
 import WebSocket from 'ws';
 
 import { PORT, HOST, __prod__ } from './config';
@@ -40,6 +41,7 @@ const init = (): void => {
   const state = new State();
   const wsManager = new WebSocketManager(wss, state);
 
+  app.use(cors({ origin: process.env.CLIENT_URL }))
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(helmet());

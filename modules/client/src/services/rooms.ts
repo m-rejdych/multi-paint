@@ -3,7 +3,7 @@ import axios, { type AxiosResponse } from 'axios';
 import type Room from '../types/Room';
 import type { CreateRoomBody } from '../types/http/Rooms';
 
-const API_PREFIX = `/api/rooms` as const;
+const API_PREFIX = `${process.env.API_URL}/api/rooms` as const;
 
 export const getRooms = async (): Promise<AxiosResponse<Room[]>> =>
   axios.get(API_PREFIX);

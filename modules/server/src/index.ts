@@ -1,7 +1,6 @@
 import http from 'http';
 import express from 'express';
 import log from 'npmlog';
-import path from 'path';
 import helmet from 'helmet';
 import WebSocket from 'ws';
 
@@ -34,29 +33,25 @@ declare global {
   }
 }
 
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-const state = new State();
-const wsManager = new WebSocketManager(wss, state);
+const init = (): void => {
+  const app = express();
+  const server = http.createServer(app);
+  const wss = new WebSocket.Server({ server });
+  const state = new State();
+  const wsManager = new WebSocketManager(wss, state);
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(helmet());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+  app.use(helmet());
 
-if (__prod__) {
-  app.use(
-    express.static(path.resolve(__dirname, '..', '..', 'client', 'build')),
-  );
-}
+  app.use('/api/rooms', state.middleware, roomRoutes);
+  app.use(errorHandler);
 
-app.use('/api/rooms', state.middleware, roomRoutes);
-app.use(errorHandler);
+  wsManager.registerHandlers();
 
-wsManager.registerHandlers();
+  server.listen(PORT, HOST, () => {
+    log.info('LIFTOFF', `Server is running on http://${HOST}:${PORT}`);
+  });
+};
 
-server.listen(PORT, HOST, () => {
-  log.info('LIFTOFF', `Server is running on http://${HOST}:${PORT}`);
-});
-
-export default server;
+init();

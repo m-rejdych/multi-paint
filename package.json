@@ -2,7 +2,7 @@
   "name": "multi-paint",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "modules/server/index.ts",
   "scripts": {
     "dev:server": "npm start --prefix modules/server",
     "build:server": "npm run build --prefix modules/server",
@@ -18,7 +18,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "concurrently": "^7.2.1"
   }
 }

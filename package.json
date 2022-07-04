@@ -13,7 +13,7 @@
     "install:client": "npm i --prefix modules/client",
     "install:server": "npm i --prefix modules/server",
     "build:all": "npm run build --prefix modules/client && npm run build --prefix modules/server",
-    "heroku-postbuild": "npm run install:server && npm run build:server"
+    "heroku-postbuild": "npm run install:server && npm run build:server && rm -r modules/server/node_modules && npm i --omit=dev --prefix modules/server"
   },
   "keywords": [],
   "author": "",

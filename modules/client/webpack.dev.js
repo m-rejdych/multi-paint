@@ -13,11 +13,5 @@ module.exports = merge(common, {
     static: path.join(__dirname, 'build'),
     hot: true,
     historyApiFallback: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080/api',
-        pathRewrite: { '^/api': '' }
-      },
-    },
   },
 })

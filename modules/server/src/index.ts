@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import WebSocket from 'ws';
 
-import { PORT, HOST, __prod__ } from './config';
+import { PORT, HOST, CLIENT_URL, __prod__ } from './config';
 import errorHandler from './handlers/error';
 import roomRoutes from './routes/rooms';
 import State from './models/State';
@@ -41,7 +41,7 @@ const init = (): void => {
   const state = new State();
   const wsManager = new WebSocketManager(wss, state);
 
-  app.use(cors({ origin: process.env.CLIENT_URL }))
+  app.use(cors({ origin: CLIENT_URL }))
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(helmet());

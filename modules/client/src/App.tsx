@@ -1,5 +1,6 @@
 import { type FC, useEffect } from 'react';
-import { Box, useColorMode } from '@chakra-ui/react';
+import { Box, Link, Tooltip, useColorMode } from '@chakra-ui/react';
+import { GitHub } from '@mui/icons-material';
 import { Outlet } from 'react-router-dom';
 
 const App: FC = () => {
@@ -10,8 +11,20 @@ const App: FC = () => {
   }, []);
 
   return (
-    <Box px={16} py={12} height="100vh">
+    <Box px={16} py={12} height="100vh" position="relative">
       <Outlet />
+      <Tooltip label="GitHub">
+        <Link
+          position="absolute"
+          top={5}
+          right={5}
+          href="https://github.com/m-rejdych/multi-paint"
+          target="_blank"
+          color="gray.500"
+        >
+          <GitHub color="inherit" />
+        </Link>
+      </Tooltip>
     </Box>
   );
 };

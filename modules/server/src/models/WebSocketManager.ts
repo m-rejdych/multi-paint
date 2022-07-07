@@ -85,7 +85,6 @@ export default class WebSocketManager {
     });
   }
 
-  // TODO: Emit error event to client socket
   private handleJoinRoom(
     socket: WebSocket.WebSocket,
     { data: { username, roomId } }: JoinRoomMessage,
@@ -122,7 +121,6 @@ export default class WebSocketManager {
     });
   }
 
-  // TODO: Emit error event to client socket
   private handleLeaveRoom(socket: WebSocket.WebSocket): void {
     const authResult = this.authSocket(socket);
     if (authResult instanceof Error) return;

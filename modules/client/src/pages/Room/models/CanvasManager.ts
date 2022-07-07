@@ -48,14 +48,6 @@ export default class CanvasManager {
     ctx.restore();
   }
 
-  // Mock object for now
-  private drawObjects(): void {
-    const { ctx } = this;
-
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(200, 200, 50, 50);
-  }
-
   private drawLine({ points, color, size }: Line): void {
     const { ctx } = this;
 
@@ -125,7 +117,6 @@ export default class CanvasManager {
   draw(): void {
     this.drawBackground();
     this.drawLines();
-    this.drawObjects();
     this.drawCursors();
     this.drawHandle = requestAnimationFrame(this.draw.bind(this));
   }

@@ -4,7 +4,7 @@ Simple app for collaborative painting.
 
 ## Tech Stack
 
-- Typescrit
+- Typescript
 - Express
 - WS
 - React
